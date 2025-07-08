@@ -1,0 +1,76 @@
+{
+  "site_settings": {
+    "site_name": "やさいせんせい",
+    "site_url": "com.atsudev.vegetable-teacher://auth/callback",
+    "additional_redirect_urls": []
+  },
+  "email_auth": {
+    "enable_signup": true,
+    "enable_confirmations": false,
+    "double_confirm_password": true,
+    "secure_email_change_enabled": true,
+    "mailer_autoconfirm": false,
+    "min_password_length": 8,
+    "password_requirements": {
+      "lowercase": true,
+      "uppercase": true,
+      "numbers": true,
+      "symbols": false
+    }
+  },
+  "security": {
+    "jwt_expiry": 3600,
+    "refresh_token_rotation_enabled": true,
+    "captcha_enabled": false,
+    "captcha_provider": "hcaptcha",
+    "rate_limiting": {
+      "max_attempts": 5,
+      "window_minutes": 15
+    }
+  },
+  "user_metadata": {
+    "required_fields": [],
+    "optional_fields": [
+      "display_name",
+      "avatar_url",
+      "location",
+      "experience_level"
+    ]
+  },
+  "social_providers": {
+    "google": {
+      "enabled": false,
+      "client_id": "",
+      "client_secret": ""
+    },
+    "apple": {
+      "enabled": false,
+      "client_id": "",
+      "client_secret": ""
+    }
+  },
+  "email_templates": {
+    "confirmation": {
+      "subject": "やさいせんせいへようこそ！メール認証をお願いします",
+      "body_html": "アカウントを有効化するために、以下のリンクをクリックしてください：{{ .ConfirmationURL }}"
+    },
+    "recovery": {
+      "subject": "パスワードリセットのご案内",
+      "body_html": "パスワードをリセットするために、以下のリンクをクリックしてください：{{ .ConfirmationURL }}"
+    },
+    "magic_link": {
+      "subject": "やさいせんせいへのログイン",
+      "body_html": "ログインするために、以下のリンクをクリックしてください：{{ .ConfirmationURL }}"
+    }
+  },
+  "webhooks": {
+    "user_created": {
+      "enabled": false,
+      "url": ""
+    },
+    "user_deleted": {
+      "enabled": false,
+      "url": ""
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+    "permissions": {
+        "write": [
+            "flutter_app/**",
+            "backend/**",
+            "supabase/**",
+            "README.md",
+            ".gitignore",
+            ".env.example"
+        ],
+        "create": [
+            "flutter_app/**",
+            "backend/**",
+            "supabase/**",
+            "docs/**",
+            "scripts/**",
+            "*.md",
+            ".*"
+        ],
+        "run": [
+            "flutter pub get",
+            "flutter run",
+            "flutter build",
+            "flutter test",
+            "flutter analyze",
+            "dart format",
+            "python -m venv venv",
+            "pip install -r requirements.txt",
+            "uvicorn main:app --reload",
+            "supabase start",
+            "supabase db reset",
+            "supabase functions serve",
+            "npm install",
+            "npm run dev"
+        ],
+        "read": [
+            "**/*"
+        ]
+    },
+    "restrict": {
+        "write": [
+            ".env",
+            "*.key",
+            "*.pem",
+            "*.p12",
+            "*.keystore",
+            "google-services.json",
+            "GoogleService-Info.plist"
+        ],
+        "create": [
+            ".env"
+        ]
+    },
+    "deny": [
+        "Bash(git commit:*)",
+        "Bash(git push:*)",
+        "Bash(rm:*)",
+        "Bash(sudo:*)",
+        "Read(.env.*)"
+    ]
+}

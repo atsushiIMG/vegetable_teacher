@@ -10,7 +10,7 @@
         "image/webp",
         "image/gif"
       ],
-      "description": "家庭菜園の写真保存用バケット",
+      "description": "やさいせんせいの写真保存用バケット",
       "folder_structure": "user_id/user_vegetable_id/timestamp.ext"
     }
   },

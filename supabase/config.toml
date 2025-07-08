@@ -1,4 +1,4 @@
-# Supabase Configuration for 家庭菜園管理アプリ
+# Supabase Configuration for やさいせんせい
 
 [api]
 # ローカル開発用の設定
@@ -12,8 +12,8 @@ max_rows = 1000
 # 認証設定
 enabled = true
 port = 54324
-site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://localhost:3000"]
+site_url = "com.atsudev.vegetable-teacher://auth/callback"
+additional_redirect_urls = []
 jwt_expiry = 3600
 enable_signup = true
 enable_confirmations = false

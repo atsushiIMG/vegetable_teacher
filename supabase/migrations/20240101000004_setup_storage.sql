@@ -1,5 +1,5 @@
 -- ストレージ設定（写真保存用バケット）
--- 家庭菜園の写真アップロード機能
+-- やさいせんせいの写真アップロード機能
 
 -- 1. vegetable-photos バケットを作成
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) VALUES (
