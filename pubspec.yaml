@@ -108,8 +108,8 @@ flutter:
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
 
-  # カスタムフォント
-  fonts:
-    - family: VegetableIcons
-      fonts:
-        - asset: assets/fonts/VegetableIcons.ttf
+  # カスタムフォント（後で追加予定）
+  # fonts:
+  #   - family: VegetableIcons
+  #     fonts:
+  #       - asset: assets/fonts/VegetableIcons.ttf
