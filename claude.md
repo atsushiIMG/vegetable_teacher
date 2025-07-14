@@ -198,9 +198,38 @@ POST /api/consultation
 }
 ```
 
+## 開発環境セットアップ
+
+### 必要なツール
+- **Supabase CLI**: npm install -g supabase
+- **Flutter**: Android アプリ開発用
+- **Python 3**: AI相談API開発用
+
+### Supabaseクラウド開発環境
+- **プロジェクト名**: やさいせんせい-dev
+- **Reference ID**: ssrfnkanoegmflgcvkpv
+- **リージョン**: Northeast Asia (Tokyo)
+
+### 開発用コマンド
+```bash
+# プロジェクト接続
+supabase link --project-ref ssrfnkanoegmflgcvkpv
+
+# マイグレーション適用
+supabase db push
+
+# プロジェクト状態確認
+supabase projects list
+```
+
+### アクセスURL（クラウド環境）
+- **Supabase Studio**: https://supabase.com/dashboard/project/ssrfnkanoegmflgcvkpv
+- **API URL**: https://ssrfnkanoegmflgcvkpv.supabase.co
+- **Database**: クラウド PostgreSQL
+
 ## 開発順序
-1. Supabaseセットアップ（認証、DB、Storage）
-2. 野菜マスタデータ手動登録
+1. ✅ Supabaseセットアップ（認証、DB、Storage）
+2. ✅ 野菜マスタデータ登録（12種類）
 3. Flutter基本画面実装
 4. 通知機能実装（Supabase Functions + FCM）
 5. Python AI相談API実装
