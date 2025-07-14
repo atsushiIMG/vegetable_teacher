@@ -1,7 +1,7 @@
 # Supabase Configuration for やさいせんせい
 
 [api]
-# ローカル開発用の設定
+# API設定
 enabled = true
 port = 54321
 schemas = ["public", "graphql_public"]
@@ -11,30 +11,21 @@ max_rows = 1000
 [auth]
 # 認証設定
 enabled = true
-port = 54324
 site_url = "com.atsudev.vegetable-teacher://auth/callback"
 additional_redirect_urls = []
 jwt_expiry = 3600
 enable_signup = true
-enable_confirmations = false
 
 [auth.email]
 # メール認証設定
 enable_signup = true
-double_confirm_password = true
 enable_confirmations = false
 
 [storage]
 # ストレージ設定（写真保存用）
 enabled = true
-port = 54325
 file_size_limit = 52428800  # 50MB
 image_transformation = { enabled = true }
-
-[functions]
-# Edge Functions設定（プッシュ通知用）
-enabled = true
-port = 54326
 
 [db]
 # データベース設定

@@ -148,11 +148,9 @@ CREATE TRIGGER cleanup_user_data_trigger
     EXECUTE FUNCTION cleanup_user_data();
 
 -- 8. メール認証設定の調整
--- メール認証テンプレートのカスタマイズ設定
-INSERT INTO auth.config (parameter, value) VALUES 
-('SITE_NAME', 'やさいせんせい'),
-('MAILER_SECURE_EMAIL_CHANGE_ENABLED', 'true'),
-('MAILER_AUTOCONFIRM', 'false'),
-('SECURITY_CAPTCHA_ENABLED', 'false'),
-('SECURITY_CAPTCHA_PROVIDER', 'hcaptcha')
-ON CONFLICT (parameter) DO UPDATE SET value = EXCLUDED.value;
+-- クラウド版Supabaseでは、認証設定はWeb UIから行う必要があります
+-- Authentication > Settings で以下の設定を手動で行ってください:
+-- - Site Name: やさいせんせい
+-- - Secure email change: enabled
+-- - Confirm email: enabled
+-- - Captcha: disabled (開発時)
