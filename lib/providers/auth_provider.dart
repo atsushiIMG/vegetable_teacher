@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/services/supabase_service.dart';
@@ -7,6 +8,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   User? _currentUser;
+  StreamSubscription<AuthState>? _authSubscription;
 
   // Getters
   bool get isLoading => _isLoading;
@@ -22,8 +24,8 @@ class AuthProvider extends ChangeNotifier {
     // 現在のユーザー状態を取得
     _currentUser = SupabaseService.currentUser;
     
-    // 認証状態の変更を監視
-    SupabaseService.authStateChanges.listen((AuthState data) {
+    // 認証状態の変更を監視（StreamSubscriptionを保存）
+    _authSubscription = SupabaseService.authStateChanges.listen((AuthState data) {
       _currentUser = data.session?.user;
       notifyListeners();
     });
@@ -169,5 +171,12 @@ class AuthProvider extends ChangeNotifier {
       default:
         return message;
     }
+  }
+
+  @override
+  void dispose() {
+    // StreamSubscriptionをキャンセルしてメモリリークを防止
+    _authSubscription?.cancel();
+    super.dispose();
   }
 }
