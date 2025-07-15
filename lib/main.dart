@@ -12,12 +12,25 @@ import 'providers/notification_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // 環境変数からSupabaseキーを取得
+  const supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: AppConstants.supabaseUrl,
+  );
+  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  
+  // APIキーの存在チェック
+  if (supabaseAnonKey.isEmpty) {
+    throw Exception(
+      'SUPABASE_ANON_KEY is not configured. '
+      'Please set the environment variable or use --dart-define during build.',
+    );
+  }
+  
   // Supabase初期化
   await Supabase.initialize(
-    url: AppConstants.supabaseUrl,
-    anonKey: AppConstants.supabaseAnonKey.isNotEmpty 
-        ? AppConstants.supabaseAnonKey 
-        : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmZua2Fub2VnbWZsZ2N2a3B2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjEzMDQ5MjUsImV4cCI6MjAzNjg4MDkyNX0.7y2JBmCrJ8l5bJBmhNgKCqfIVfNyEqhVOlXJrGJ8TfM',
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
   );
   
   runApp(const VegetableTeacherApp());

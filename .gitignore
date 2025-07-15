@@ -43,3 +43,19 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment variables and secrets
+.env
+.env.local
+.env.development
+.env.production
+*.env
+config/secrets.dart
+
+# API keys and sensitive data
+**/secrets/
+**/keys/
+**/*.key
+**/*.pem
+**/google-services.json
+**/GoogleService-Info.plist
