@@ -131,8 +131,10 @@ class AuthProvider extends ChangeNotifier {
       await SupabaseService.client.auth.refreshSession();
       _currentUser = SupabaseService.currentUser;
       notifyListeners();
+    } on AuthException catch (e) {
+      _setError(_getJapaneseErrorMessage(e.message));
     } catch (e) {
-      debugPrint('セッション更新エラー: $e');
+      _setError('セッション更新に失敗しました: $e');
     }
   }
 
