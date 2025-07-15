@@ -10,7 +10,7 @@ import '../../screens/auth/signup_screen.dart';
 class AppRouter {
   static GoRouter createRouter() {
     return GoRouter(
-      initialLocation: '/login',
+      initialLocation: '/',
       routes: [
         // 認証画面
         GoRoute(
@@ -59,6 +59,12 @@ class AppRouter {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final isAuthenticating = state.matchedLocation == '/login' || 
                                  state.matchedLocation == '/signup';
+        final isSplash = state.matchedLocation == '/';
+        
+        // スプラッシュ画面はリダイレクト対象外（自身で認証判定を行うため）
+        if (isSplash) {
+          return null;
+        }
         
         // 認証済みユーザーが認証画面にアクセスしようとした場合、ホームに転送
         if (authProvider.isAuthenticated && isAuthenticating) {
@@ -66,7 +72,7 @@ class AppRouter {
         }
         
         // 未認証ユーザーが保護されたページにアクセスしようとした場合、ログイン画面に転送
-        if (!authProvider.isAuthenticated && !isAuthenticating && state.matchedLocation != '/') {
+        if (!authProvider.isAuthenticated && !isAuthenticating) {
           return '/login';
         }
         
