@@ -41,11 +41,35 @@ CREATE POLICY "user_profiles_delete_policy" ON user_profiles
 
 -- 3. 新規ユーザー登録時の自動プロファイル作成
 CREATE OR REPLACE FUNCTION create_user_profile()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
 BEGIN
-    INSERT INTO user_profiles (id, display_name)
-    VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1)));
+    -- 入力検証
+    IF NEW.id IS NULL THEN
+        RAISE EXCEPTION 'User ID cannot be null';
+    END IF;
+    
+    IF NEW.email IS NULL OR NEW.email = '' THEN
+        RAISE EXCEPTION 'User email cannot be null or empty';
+    END IF;
+    
+    -- プロファイル作成
+    INSERT INTO public.user_profiles (id, display_name)
+    VALUES (
+        NEW.id, 
+        COALESCE(
+            NEW.raw_user_meta_data->>'display_name', 
+            split_part(NEW.email, '@', 1)
+        )
+    );
+    
     RETURN NEW;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- TODO エラーログを記録（本番環境では適切なログシステムを使用）
+        RAISE EXCEPTION 'Failed to create user profile: %', SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -56,6 +80,15 @@ CREATE TRIGGER create_user_profile_trigger
     EXECUTE FUNCTION create_user_profile();
 
 -- 4. プロファイル更新時刻の自動更新
+-- 依存関数の定義（他のマイグレーションで定義済みの場合は無視される）
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER update_user_profiles_updated_at
     BEFORE UPDATE ON user_profiles
     FOR EACH ROW
@@ -67,9 +100,26 @@ CREATE TRIGGER update_user_profiles_updated_at
 CREATE OR REPLACE FUNCTION update_user_experience_level(
     p_user_id UUID,
     p_experience_level VARCHAR(20)
-) RETURNS VOID AS $$
+) RETURNS VOID
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
-    UPDATE user_profiles
+    -- 入力検証
+    IF p_user_id IS NULL THEN
+        RAISE EXCEPTION 'User ID cannot be null';
+    END IF;
+    
+    IF p_experience_level NOT IN ('beginner', 'intermediate', 'advanced') THEN
+        RAISE EXCEPTION 'Invalid experience level: %', p_experience_level;
+    END IF;
+    
+    -- 権限チェック（現在のユーザーが自分のプロファイルを更新しているか）
+    IF auth.uid() != p_user_id THEN
+        RAISE EXCEPTION 'Permission denied: cannot update other users profile';
+    END IF;
+    
+    UPDATE public.user_profiles
     SET experience_level = p_experience_level
     WHERE id = p_user_id;
 END;
@@ -79,9 +129,26 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION update_notification_settings(
     p_user_id UUID,
     p_settings JSONB
-) RETURNS VOID AS $$
+) RETURNS VOID
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
-    UPDATE user_profiles
+    -- 入力検証
+    IF p_user_id IS NULL THEN
+        RAISE EXCEPTION 'User ID cannot be null';
+    END IF;
+    
+    IF p_settings IS NULL THEN
+        RAISE EXCEPTION 'Settings cannot be null';
+    END IF;
+    
+    -- 権限チェック（現在のユーザーが自分のプロファイルを更新しているか）
+    IF auth.uid() != p_user_id THEN
+        RAISE EXCEPTION 'Permission denied: cannot update other users profile';
+    END IF;
+    
+    UPDATE public.user_profiles
     SET notification_settings = p_settings
     WHERE id = p_user_id;
 END;
@@ -90,12 +157,25 @@ $$ LANGUAGE plpgsql;
 -- ユーザーの通知設定を取得する関数
 CREATE OR REPLACE FUNCTION get_user_notification_settings(
     p_user_id UUID
-) RETURNS JSONB AS $$
+) RETURNS JSONB
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
     v_settings JSONB;
 BEGIN
+    -- 入力検証
+    IF p_user_id IS NULL THEN
+        RAISE EXCEPTION 'User ID cannot be null';
+    END IF;
+    
+    -- 権限チェック（現在のユーザーが自分のプロファイルを取得しているか）
+    IF auth.uid() != p_user_id THEN
+        RAISE EXCEPTION 'Permission denied: cannot access other users profile';
+    END IF;
+    
     SELECT notification_settings INTO v_settings
-    FROM user_profiles
+    FROM public.user_profiles
     WHERE id = p_user_id;
     
     RETURN COALESCE(v_settings, '{}'::jsonb);
