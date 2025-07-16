@@ -37,22 +37,36 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       clearError();
 
+      print('🚀 Starting signup for: $email');
+      print('🔗 Starting Supabase signup...');
+
       final AuthResponse response = await SupabaseService.client.auth.signUp(
         email: email,
         password: password,
       );
 
+      print('📥 Signup response: ${response.user?.id}');
+      print('📧 User email: ${response.user?.email}');
+      print('✅ User confirmed: ${response.user?.emailConfirmedAt}');
+      print('🔐 Session: ${response.session?.accessToken != null ? 'EXISTS' : 'NULL'}');
+
       if (response.user != null) {
         _currentUser = response.user;
+        print('✅ Signup successful for user: ${response.user!.id}');
         return true;
       } else {
+        print('❌ Signup failed: No user returned');
         _setError('アカウント作成に失敗しました');
         return false;
       }
     } on AuthException catch (e) {
+      print('🚨 AuthException: ${e.message}');
+      print('🚨 AuthException statusCode: ${e.statusCode}');
       _setError(_getJapaneseErrorMessage(e.message));
       return false;
     } catch (e) {
+      print('💥 Unexpected error: $e');
+      print('💥 Error type: ${e.runtimeType}');
       _setError('予期しないエラーが発生しました: $e');
       return false;
     } finally {
