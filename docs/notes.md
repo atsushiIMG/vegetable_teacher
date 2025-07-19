@@ -74,7 +74,7 @@ supabase projects list
 
 ### 認証方式
 - Android専用でカスタムURIスキーム採用
-- `com.atsudev.vegetable_teacher_app://auth/callback`
+- `com.atsudev.vegetable-teacher://auth/callback`
 - **判断理由**: モバイルアプリでの認証体験を最適化
 
 ## 🚨 今後注意すべき点

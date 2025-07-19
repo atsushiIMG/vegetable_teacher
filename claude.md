@@ -17,7 +17,7 @@
 - **ストレージ**: Supabase Storage
 - **プッシュ通知**: Supabase Functions + FCM
 - **AI**: OpenAI API (GPT-4o-mini)
-- **パッケージ名**: com.atsudev.vegetable_teacher_app
+- **パッケージ名**: com.atsudev.vegetable-teacher
 
 ## 主要機能
 
