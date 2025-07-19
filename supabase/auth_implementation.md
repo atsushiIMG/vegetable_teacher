@@ -44,7 +44,7 @@
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="com.atsudev.vegetable-teacher" />
+        <data android:scheme="com.atsudev.vegetable_teacher_app" />
     </intent-filter>
 </activity>
 ```

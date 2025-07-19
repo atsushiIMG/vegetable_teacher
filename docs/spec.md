@@ -16,7 +16,7 @@
 - **認証**: Supabase Auth
 - **ストレージ**: Supabase Storage
 - **AI**: OpenAI GPT-4o-mini
-- **パッケージ名**: `com.atsudev.vegetable-teacher`
+- **パッケージ名**: `com.atsudev.vegetable_teacher_app`
 
 ## 🎯 機能仕様（フェーズ1 MVP）
 
@@ -95,7 +95,7 @@ POST /api/consultation
 
 ### Supabase Auth
 - メール認証
-- カスタムURIスキーム：`com.atsudev.vegetable-teacher://auth/callback`
+- カスタムURIスキーム：`com.atsudev.vegetable_teacher_app://auth/callback`
 
 ## 🔔 通知仕様
 

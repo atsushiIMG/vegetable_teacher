@@ -8,7 +8,7 @@ class AppConstants {
   // =====================
   static const String appName = 'やさいせんせい';
   static const String appVersion = '1.0.0';
-  static const String appPackageName = 'com.atsudev.vegetable-teacher';
+  static const String appPackageName = 'com.atsudev.vegetable_teacher_app';
   
   // =====================
   // API・URL関連

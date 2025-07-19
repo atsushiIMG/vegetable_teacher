@@ -4,8 +4,8 @@
 やさいせんせいのAndroid向けSupabase認証設定の詳細ガイド
 
 ## 基本情報
-- **パッケージ名**: `com.atsudev.vegetable-teacher`
-- **カスタムURIスキーム**: `com.atsudev.vegetable-teacher://auth/callback`
+- **パッケージ名**: `com.atsudev.vegetable_teacher_app`
+- **カスタムURIスキーム**: `com.atsudev.vegetable_teacher_app://auth/callback`
 - **認証フロー**: PKCE（Proof Key for Code Exchange）
 
 ## 1. Android設定
@@ -107,7 +107,7 @@ android {
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.atsudev.vegetable-teacher" />
+                <data android:scheme="com.atsudev.vegetable_teacher_app" />
             </intent-filter>
         </activity>
         
@@ -324,7 +324,7 @@ class DeepLinkHandler {
     final uri = Uri.parse(url);
     
     // 認証コールバックの処理
-    if (uri.scheme == 'com.atsudev.vegetable-teacher' && uri.host == 'auth') {
+    if (uri.scheme == 'com.atsudev.vegetable_teacher_app' && uri.host == 'auth') {
       // Supabaseが自動的に処理
       print('認証コールバックを受信: $url');
     }
