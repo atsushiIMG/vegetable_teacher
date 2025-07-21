@@ -110,10 +110,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.g_translate,
-                                  size: 20,
-                                  color: Colors.black87,
+                                Image.asset(
+                                  'assets/icons/google_logo.png',
+                                  width: 20,
+                                  height: 20,
                                 ),
                                 const SizedBox(width: 12),
                                 const Text(
