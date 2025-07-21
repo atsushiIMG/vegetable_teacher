@@ -71,7 +71,7 @@
 
 ### 開発環境
 - **Supabaseプロジェクト**: やさいせんせい-dev (ssrfnkanoegmflgcvkpv)
-- **パッケージ名**: com.atsudev.vegetable-teacher
+- **パッケージ名**: com.atsudev.vegetable_teacher
 
 ### 外部資料
 - [Supabase Documentation](https://supabase.com/docs)
