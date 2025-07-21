@@ -39,7 +39,6 @@ dependencies:
   
   # Google認証
   google_sign_in: ^6.2.1
-  
   # 状態管理
   provider: ^6.1.2
   

@@ -23,7 +23,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void _init() {
-    // Google Sign-In の初期化
+    // Google Sign-In の初期化（v6.x仕様）
     _googleSignIn = GoogleSignIn(
       scopes: ['email'], // emailスコープのみ（最小限のアクセス）
       serverClientId:
@@ -48,31 +48,25 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       clearError();
 
-      print('DEBUG: Google Sign-In開始');
 
       // Google Sign-In を実行
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
-        print('DEBUG: Googleサインインがキャンセルされました');
         _setError('Googleサインインがキャンセルされました');
         return false;
       }
 
-      print('DEBUG: Google認証成功 - ユーザー: ${googleUser.email}');
 
       // Google認証情報を取得
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
       if (googleAuth.idToken == null) {
-        print('DEBUG: IDトークンが取得できませんでした');
         _setError('Google認証トークンの取得に失敗しました');
         return false;
       }
 
-      print('DEBUG: トークン取得成功');
-      print('DEBUG: IDトークン: ${googleAuth.idToken?.substring(0, 50)}...');
 
       // SupabaseでGoogle認証
       final AuthResponse response = await SupabaseService.client.auth
@@ -83,21 +77,16 @@ class AuthProvider extends ChangeNotifier {
           );
 
       if (response.user != null) {
-        print('DEBUG: Supabase認証成功 - ユーザー: ${response.user!.email}');
         _currentUser = response.user;
         return true;
       } else {
-        print('DEBUG: Supabase認証失敗 - レスポンス: ${response.toString()}');
         _setError('Google認証に失敗しました');
         return false;
       }
     } on AuthException catch (e) {
-      print('DEBUG: AuthException - ${e.message}');
       _setError(_getJapaneseErrorMessage(e.message));
       return false;
     } catch (e) {
-      print('DEBUG: 予期しないエラー - $e');
-      print('DEBUG: エラータイプ: ${e.runtimeType}');
       _setError('予期しないエラーが発生しました: $e');
       return false;
     } finally {
@@ -151,6 +140,7 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
+
 
   /// Supabaseエラーメッセージを日本語に変換
   String _getJapaneseErrorMessage(String message) {
