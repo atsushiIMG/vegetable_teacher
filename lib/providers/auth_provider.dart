@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../core/services/supabase_service.dart';
 
 /// 認証状態管理プロバイダー
@@ -24,10 +25,14 @@ class AuthProvider extends ChangeNotifier {
 
   void _init() {
     // Google Sign-In の初期化（v6.x仕様）
+    final googleClientId = dotenv.env['GOOGLE_CLIENT_ID'];
+    if (googleClientId == null || googleClientId.isEmpty) {
+      throw Exception('GOOGLE_CLIENT_IDが環境変数に設定されていません');
+    }
+    
     _googleSignIn = GoogleSignIn(
       scopes: ['email'], // emailスコープのみ（最小限のアクセス）
-      serverClientId:
-          '890560898631-fjnnamd5k9muaa8stda2ssp1fj38oejq.apps.googleusercontent.com',
+      serverClientId: googleClientId,
     );
 
     // 現在のユーザー状態を取得
