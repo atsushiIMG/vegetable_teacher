@@ -11,7 +11,7 @@ max_rows = 1000
 [auth]
 # 認証設定
 enabled = true
-site_url = "com.atsudev.vegetable-teacher://auth/callback"
+site_url = "com.atsudev.vegetable_teacher://auth/callback"
 additional_redirect_urls = []
 jwt_expiry = 3600
 enable_signup = true

@@ -1,4 +1,4 @@
-package com.atsudev.vegetable_teacher_app
+package com.atsudev.vegetable_teacher
 
 import io.flutter.embedding.android.FlutterActivity
 

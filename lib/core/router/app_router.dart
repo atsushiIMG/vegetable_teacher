@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../screens/auth/login_screen.dart';
-import '../../screens/auth/signup_screen.dart';
 
 /// アプリ全体のルーティング設定
 class AppRouter {
@@ -21,14 +20,7 @@ class AppRouter {
             child: const LoginScreen(),
           ),
         ),
-        GoRoute(
-          path: '/signup',
-          name: 'signup',
-          pageBuilder: (context, state) => MaterialPage(
-            key: state.pageKey,
-            child: const SignupScreen(),
-          ),
-        ),
+        // サインアップ画面は削除されました（Google認証のみ）
         // ホーム画面（将来実装）
         GoRoute(
           path: '/home',
@@ -57,8 +49,7 @@ class AppRouter {
       ],
       redirect: (context, state) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        final isAuthenticating = state.matchedLocation == '/login' || 
-                                 state.matchedLocation == '/signup';
+        final isAuthenticating = state.matchedLocation == '/login';
         final isSplash = state.matchedLocation == '/';
         
         // スプラッシュ画面はリダイレクト対象外（自身で認証判定を行うため）

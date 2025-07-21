@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.atsudev.vegetable_teacher_app"
+    namespace = "com.atsudev.vegetable_teacher"
     compileSdk = 35
 
     compileOptions {
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.atsudev.vegetable_teacher_app"
+        applicationId = "com.atsudev.vegetable_teacher"
         minSdk = 21
         targetSdk = 35
         versionCode = 1
