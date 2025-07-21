@@ -111,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.login,
+                                  Icons.g_translate,
                                   size: 20,
                                   color: Colors.black87,
                                 ),
