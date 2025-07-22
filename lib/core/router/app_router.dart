@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../screens/auth/login_screen.dart';
+import '../../screens/vegetables/vegetable_list_screen.dart';
+import '../../screens/vegetables/add_vegetable_screen.dart';
+import '../../screens/vegetables/vegetable_detail_screen.dart';
 
 /// アプリ全体のルーティング設定
 class AppRouter {
@@ -21,14 +24,49 @@ class AppRouter {
           ),
         ),
         // サインアップ画面は削除されました（Google認証のみ）
-        // ホーム画面（将来実装）
+        // ホーム画面（野菜一覧画面）
         GoRoute(
           path: '/home',
           name: 'home',
           pageBuilder: (context, state) => MaterialPage(
             key: state.pageKey,
-            child: const PlaceholderHomeScreen(),
+            child: const VegetableListScreen(),
           ),
+          redirect: (context, state) {
+            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            if (!authProvider.isAuthenticated) {
+              return '/login';
+            }
+            return null;
+          },
+        ),
+        // 野菜追加画面
+        GoRoute(
+          path: '/vegetables/add',
+          name: 'addVegetable',
+          pageBuilder: (context, state) => MaterialPage(
+            key: state.pageKey,
+            child: const AddVegetableScreen(),
+          ),
+          redirect: (context, state) {
+            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            if (!authProvider.isAuthenticated) {
+              return '/login';
+            }
+            return null;
+          },
+        ),
+        // 野菜詳細画面
+        GoRoute(
+          path: '/vegetables/:id',
+          name: 'vegetableDetail',
+          pageBuilder: (context, state) {
+            final userVegetableId = state.pathParameters['id']!;
+            return MaterialPage(
+              key: state.pageKey,
+              child: VegetableDetailScreen(userVegetableId: userVegetableId),
+            );
+          },
           redirect: (context, state) {
             final authProvider = Provider.of<AuthProvider>(context, listen: false);
             if (!authProvider.isAuthenticated) {
@@ -95,51 +133,6 @@ class AppRouter {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// プレースホルダーのホーム画面
-class PlaceholderHomeScreen extends StatelessWidget {
-  const PlaceholderHomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('やさいせんせい'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            onPressed: () {
-              final authProvider = Provider.of<AuthProvider>(context, listen: false);
-              authProvider.signOut();
-              context.go('/login');
-            },
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.eco, size: 100, color: Colors.green),
-            SizedBox(height: 24),
-            Text(
-              'ホーム画面',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'ログイン成功！\n今後はここに野菜管理機能を実装します。',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
-            ),
-          ],
         ),
       ),
     );
