@@ -61,7 +61,33 @@ class AppRouter {
           path: '/vegetables/:id',
           name: 'vegetableDetail',
           pageBuilder: (context, state) {
-            final userVegetableId = state.pathParameters['id']!;
+            final userVegetableId = state.pathParameters['id'];
+            
+            // IDパラメータの検証
+            if (userVegetableId == null || userVegetableId.isEmpty) {
+              return MaterialPage(
+                key: state.pageKey,
+                child: Scaffold(
+                  appBar: AppBar(title: const Text('エラー')),
+                  body: const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline, size: 64, color: Colors.red),
+                        SizedBox(height: 16),
+                        Text(
+                          '無効なIDです',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 8),
+                        Text('野菜の詳細を表示できませんでした'),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+            
             return MaterialPage(
               key: state.pageKey,
               child: VegetableDetailScreen(userVegetableId: userVegetableId),
