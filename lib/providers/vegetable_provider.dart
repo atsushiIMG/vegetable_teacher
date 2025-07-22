@@ -199,23 +199,35 @@ class VegetableProvider extends ChangeNotifier {
 
   /// 収穫に変更
   Future<bool> harvestVegetable(String userVegetableId) async {
-    final userVegetable = _userVegetables.firstWhere(
-      (v) => v.id == userVegetableId,
-    );
-    
-    return updateUserVegetable(
-      userVegetable.copyWith(status: VegetableStatus.harvested),
-    );
+    try {
+      final userVegetable = _userVegetables.firstWhere(
+        (v) => v.id == userVegetableId,
+        orElse: () => throw StateError('User vegetable not found'),
+      );
+      
+      return updateUserVegetable(
+        userVegetable.copyWith(status: VegetableStatus.harvested),
+      );
+    } catch (e) {
+      _setError('指定された野菜が見つかりません: $userVegetableId');
+      return false;
+    }
   }
 
   /// アーカイブに変更
   Future<bool> archiveVegetable(String userVegetableId) async {
-    final userVegetable = _userVegetables.firstWhere(
-      (v) => v.id == userVegetableId,
-    );
-    
-    return updateUserVegetable(
-      userVegetable.copyWith(status: VegetableStatus.archived),
-    );
+    try {
+      final userVegetable = _userVegetables.firstWhere(
+        (v) => v.id == userVegetableId,
+        orElse: () => throw StateError('User vegetable not found'),
+      );
+      
+      return updateUserVegetable(
+        userVegetable.copyWith(status: VegetableStatus.archived),
+      );
+    } catch (e) {
+      _setError('指定された野菜が見つかりません: $userVegetableId');
+      return false;
+    }
   }
 }
