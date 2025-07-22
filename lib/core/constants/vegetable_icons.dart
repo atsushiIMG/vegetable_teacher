@@ -24,34 +24,7 @@ class VegetableIcons {
 
   /// 野菜名から画像パスを取得
   static String getIconPath(String vegetableName) {
-    switch (vegetableName) {
-      case 'トマト':
-        return tomato;
-      case 'きゅうり':
-        return cucumber;
-      case 'ナス':
-        return eggplant;
-      case 'オクラ':
-        return okra;
-      case 'バジル':
-        return basil;
-      case 'サニーレタス':
-        return sunnyLettuce;
-      case '二十日大根':
-        return radish;
-      case 'ほうれん草':
-        return spinach;
-      case '小カブ':
-        return turnip;
-      case 'ピーマン':
-        return bellPepper;
-      case 'しそ':
-        return shiso;
-      case 'モロヘイヤ':
-        return moroheiya;
-      default:
-        return defaultVegetable;
-    }
+    return availableIcons[vegetableName] ?? defaultVegetable;
   }
 
   /// 利用可能な野菜アイコンのリスト
