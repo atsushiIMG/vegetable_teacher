@@ -7,6 +7,8 @@ import '../../screens/auth/login_screen.dart';
 import '../../screens/vegetables/vegetable_list_screen.dart';
 import '../../screens/vegetables/add_vegetable_screen.dart';
 import '../../screens/vegetables/vegetable_detail_screen.dart';
+import '../../screens/ai_chat/ai_chat_screen.dart';
+import '../../models/user_vegetable.dart';
 
 /// アプリ全体のルーティング設定
 class AppRouter {
@@ -91,6 +93,52 @@ class AppRouter {
             return MaterialPage(
               key: state.pageKey,
               child: VegetableDetailScreen(userVegetableId: userVegetableId),
+            );
+          },
+          redirect: (context, state) {
+            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            if (!authProvider.isAuthenticated) {
+              return '/login';
+            }
+            return null;
+          },
+        ),
+        // AI相談画面
+        GoRoute(
+          path: '/vegetables/:id/chat',
+          name: 'aiChat',
+          pageBuilder: (context, state) {
+            final userVegetableId = state.pathParameters['id'];
+            final userVegetable = state.extra as UserVegetable?;
+            
+            // パラメータの検証
+            if (userVegetableId == null || userVegetableId.isEmpty || userVegetable == null) {
+              return MaterialPage(
+                key: state.pageKey,
+                child: Scaffold(
+                  appBar: AppBar(title: const Text('エラー')),
+                  body: const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline, size: 64, color: Colors.red),
+                        SizedBox(height: 16),
+                        Text(
+                          '野菜情報が見つかりません',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 8),
+                        Text('AI相談を開始できませんでした'),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+            
+            return MaterialPage(
+              key: state.pageKey,
+              child: AiChatScreen(userVegetable: userVegetable),
             );
           },
           redirect: (context, state) {
