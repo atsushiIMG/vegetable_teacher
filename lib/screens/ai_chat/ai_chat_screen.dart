@@ -4,7 +4,7 @@ import '../../models/user_vegetable.dart';
 import '../../models/vegetable.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/app_text_styles.dart';
-import '../../services/ai_chat_service.dart';
+import '../../services/ai_chat_service.dart' show AiChatService, ChatMessage, RateLimitException, ApiException;
 import '../../services/consultation_service.dart';
 import '../../providers/vegetable_provider.dart';
 
