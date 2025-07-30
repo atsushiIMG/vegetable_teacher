@@ -127,12 +127,7 @@ class VegetableListScreen extends StatelessWidget {
               context.push('/vegetables/add');
               break;
             case 2:
-              // TODO: 設定画面に遷移
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('設定画面は今後実装予定です'),
-                ),
-              );
+              context.push('/settings');
               break;
           }
         },
