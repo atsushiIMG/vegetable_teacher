@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/vegetable_provider.dart';
 import '../../models/user_vegetable.dart';
 import '../../models/vegetable.dart';
@@ -120,8 +121,11 @@ class _VegetableDetailScreenState extends State<VegetableDetailScreen> {
           ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
-              // TODO: AI相談画面に遷移
-              print('AI相談画面に遷移');
+              context.pushNamed(
+                'aiChat',
+                pathParameters: {'id': userVegetable.id},
+                extra: userVegetable,
+              );
             },
             backgroundColor: AppColors.secondary,
             foregroundColor: Colors.white,
