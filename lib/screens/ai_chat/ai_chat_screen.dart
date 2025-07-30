@@ -11,10 +11,7 @@ import '../../providers/vegetable_provider.dart';
 class AiChatScreen extends StatefulWidget {
   final UserVegetable userVegetable;
 
-  const AiChatScreen({
-    super.key,
-    required this.userVegetable,
-  });
+  const AiChatScreen({super.key, required this.userVegetable});
 
   @override
   State<AiChatScreen> createState() => _AiChatScreenState();
@@ -44,19 +41,27 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   void _loadChatHistory() async {
     try {
-      final chatHistory = await _consultationService.getChatHistory(widget.userVegetable.id);
-      
+      final chatHistory = await _consultationService.getChatHistory(
+        widget.userVegetable.id,
+      );
+
       setState(() {
         if (chatHistory.isEmpty) {
           // VegetableProviderから野菜名を取得
-          final vegetableProvider = Provider.of<VegetableProvider>(context, listen: false);
-          final vegetable = vegetableProvider.getVegetableById(widget.userVegetable.vegetableId);
+          final vegetableProvider = Provider.of<VegetableProvider>(
+            context,
+            listen: false,
+          );
+          final vegetable = vegetableProvider.getVegetableById(
+            widget.userVegetable.vegetableId,
+          );
           final vegetableName = vegetable?.name ?? '野菜';
           final plantedDays = widget.userVegetable.daysSincePlanted;
-          
+
           _messages = [
             ChatMessage(
-              message: 'こんにちは！$vegetableNameの栽培についてサポートします。植えてから$plantedDays日目ですね。栽培で気になることがあれば何でもお聞きください！',
+              message:
+                  'こんにちは！$vegetableNameの栽培についてサポートします。植えてから$plantedDays日目ですね。栽培で気になることがあれば何でもお聞きください！',
               isUser: false,
               timestamp: DateTime.now(),
             ),
@@ -85,11 +90,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _messageController.clear();
 
     setState(() {
-      _messages.add(ChatMessage(
-        message: userMessage,
-        isUser: true,
-        timestamp: DateTime.now(),
-      ));
+      _messages.add(
+        ChatMessage(
+          message: userMessage,
+          isUser: true,
+          timestamp: DateTime.now(),
+        ),
+      );
       _isLoading = true;
       _canSend = false;
     });
@@ -98,30 +105,40 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
     try {
       // VegetableProviderから野菜情報を取得
-      final vegetableProvider = Provider.of<VegetableProvider>(context, listen: false);
-      final vegetable = vegetableProvider.getVegetableById(widget.userVegetable.vegetableId);
-      
+      final vegetableProvider = Provider.of<VegetableProvider>(
+        context,
+        listen: false,
+      );
+      final vegetable = vegetableProvider.getVegetableById(
+        widget.userVegetable.vegetableId,
+      );
+
       final response = await _aiChatService.sendMessage(
         message: userMessage,
         userVegetable: widget.userVegetable,
         vegetable: vegetable,
-        chatHistory: _messages.where((msg) => !msg.message.startsWith('こんにちは！')).toList(),
+        chatHistory:
+            _messages
+                .where((msg) => !msg.message.startsWith('こんにちは！'))
+                .toList(),
       );
-      
+
       setState(() {
-        _messages.add(ChatMessage(
-          message: response,
-          isUser: false,
-          timestamp: DateTime.now(),
-        ));
+        _messages.add(
+          ChatMessage(
+            message: response,
+            isUser: false,
+            timestamp: DateTime.now(),
+          ),
+        );
         _isLoading = false;
       });
 
       _scrollToBottom();
-      
+
       // 相談履歴を保存
       await _saveChatHistory();
-      
+
       // 送信可能状態に戻す（3秒後）
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted) {
@@ -134,9 +151,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
       setState(() {
         _isLoading = false;
       });
-      
+
       _handleError(e);
-      
+
       // エラー時も一定時間後に送信可能にする
       Future.delayed(const Duration(seconds: 5), () {
         if (mounted) {
@@ -172,13 +189,17 @@ class _AiChatScreenState extends State<AiChatScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: error is RateLimitException ? Colors.orange : Colors.red,
+          backgroundColor:
+              error is RateLimitException ? Colors.orange : Colors.red,
           duration: const Duration(seconds: 5),
-          action: action != null ? SnackBarAction(
-            label: actionText,
-            textColor: Colors.white,
-            onPressed: action,
-          ) : null,
+          action:
+              action != null
+                  ? SnackBarAction(
+                    label: actionText,
+                    textColor: Colors.white,
+                    onPressed: action,
+                  )
+                  : null,
         ),
       );
     }
@@ -187,29 +208,30 @@ class _AiChatScreenState extends State<AiChatScreen> {
   void _showRateLimitDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.access_time, color: Colors.orange),
-            SizedBox(width: 8),
-            Text('レート制限について'),
-          ],
-        ),
-        content: const Text(
-          'OpenAI APIには利用制限があります。\n\n'
-          '対処法：\n'
-          '• 2-3分待ってから再試行\n'
-          '• 質問を簡潔にまとめる\n'
-          '• 連続でメッセージを送らない\n\n'
-          'ご理解とご協力をお願いします。',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('了解'),
+      builder:
+          (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.access_time, color: Colors.orange),
+                SizedBox(width: 8),
+                Text('レート制限について'),
+              ],
+            ),
+            content: const Text(
+              'OpenAI APIには利用制限があります。\n\n'
+              '対処法：\n'
+              '• 2-3分待ってから再試行\n'
+              '• 質問を簡潔にまとめる\n'
+              '• 連続でメッセージを送らない\n\n'
+              'ご理解とご協力をお願いします。',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('了解'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -242,9 +264,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       appBar: AppBar(
         title: Text(
           'AI相談',
-          style: AppTextStyles.subtitle1.copyWith(
-            color: Colors.white,
-          ),
+          style: AppTextStyles.subtitle1.copyWith(color: Colors.white),
         ),
         backgroundColor: AppColors.primary,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -263,7 +283,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   if (index == _messages.length && _isLoading) {
                     return _buildLoadingMessage();
                   }
-                  
+
                   return _buildMessageBubble(_messages[index]);
                 },
               ),
@@ -279,9 +299,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
-        mainAxisAlignment: message.isUser 
-            ? MainAxisAlignment.end 
-            : MainAxisAlignment.start,
+        mainAxisAlignment:
+            message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!message.isUser) _buildAvatar(false),
@@ -290,9 +309,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: message.isUser 
-                    ? AppColors.primary 
-                    : Colors.white,
+                color: message.isUser ? AppColors.primary : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -308,16 +325,18 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   Text(
                     message.message,
                     style: AppTextStyles.body2.copyWith(
-                      color: message.isUser ? Colors.white : AppColors.onSurface,
+                      color:
+                          message.isUser ? Colors.white : AppColors.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     _formatTime(message.timestamp),
                     style: AppTextStyles.caption.copyWith(
-                      color: message.isUser 
-                          ? Colors.white.withValues(alpha: 0.8)
-                          : AppColors.disabled,
+                      color:
+                          message.isUser
+                              ? Colors.white.withValues(alpha: 0.8)
+                              : AppColors.disabled,
                     ),
                   ),
                 ],
@@ -361,7 +380,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -441,23 +462,25 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: (_isLoading || !_canSend) ? AppColors.disabled : AppColors.primary,
+                  color:
+                      (_isLoading || !_canSend)
+                          ? AppColors.disabled
+                          : AppColors.primary,
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: _isLoading
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : Icon(
-                        Icons.send,
-                        color: Colors.white,
-                        size: 20,
-                      ),
+                child:
+                    _isLoading
+                        ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                        : Icon(Icons.send, color: Colors.white, size: 20),
               ),
             ),
           ],
@@ -470,4 +493,3 @@ class _AiChatScreenState extends State<AiChatScreen> {
     return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }
-

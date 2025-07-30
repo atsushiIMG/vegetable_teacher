@@ -40,7 +40,12 @@ class AiChatService {
           },
           body: jsonEncode({
             'model': 'gpt-4o-mini',
-            'messages': _buildMessages(message, userVegetable, vegetable, chatHistory),
+            'messages': _buildMessages(
+              message,
+              userVegetable,
+              vegetable,
+              chatHistory,
+            ),
             'max_tokens': 1000,
             'temperature': 0.7,
           }),
@@ -148,7 +153,7 @@ class AiChatService {
     // 野菜固有の情報を取得
     final growingTips = vegetable?.growingTips ?? '';
     final commonProblems = vegetable?.commonProblems ?? '';
-    
+
     // 現在の成長段階を判定
     final currentStage = _getCurrentGrowthStage(userVegetable, vegetable);
 
@@ -180,12 +185,15 @@ ${commonProblems.isNotEmpty ? commonProblems : '病害虫や成長不良が見�
 ''';
   }
 
-  String _getCurrentGrowthStage(UserVegetable userVegetable, Vegetable? vegetable) {
+  String _getCurrentGrowthStage(
+    UserVegetable userVegetable,
+    Vegetable? vegetable,
+  ) {
     if (vegetable == null) return '成長中';
-    
+
     final schedule = vegetable.getScheduleForPlantType(userVegetable.plantType);
     final daysSincePlanted = userVegetable.daysSincePlanted;
-    
+
     // 現在の日数に最も近いタスクを見つける
     VegetableTask? currentTask;
     for (final task in schedule.tasks) {
@@ -195,7 +203,7 @@ ${commonProblems.isNotEmpty ? commonProblems : '病害虫や成長不良が見�
         break;
       }
     }
-    
+
     if (currentTask != null) {
       return '${currentTask.type}期（${currentTask.day}日目以降）';
     } else {
