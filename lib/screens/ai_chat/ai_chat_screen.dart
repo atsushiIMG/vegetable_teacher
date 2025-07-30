@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/user_vegetable.dart';
+import '../../models/vegetable.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/app_text_styles.dart';
 import '../../services/ai_chat_service.dart';
 import '../../services/consultation_service.dart';
+import '../../providers/vegetable_provider.dart';
 
 class AiChatScreen extends StatefulWidget {
   final UserVegetable userVegetable;
@@ -45,9 +48,15 @@ class _AiChatScreenState extends State<AiChatScreen> {
       
       setState(() {
         if (chatHistory.isEmpty) {
+          // VegetableProviderから野菜名を取得
+          final vegetableProvider = Provider.of<VegetableProvider>(context, listen: false);
+          final vegetable = vegetableProvider.getVegetableById(widget.userVegetable.vegetableId);
+          final vegetableName = vegetable?.name ?? '野菜';
+          final plantedDays = widget.userVegetable.daysSincePlanted;
+          
           _messages = [
             ChatMessage(
-              message: 'こんにちは！野菜の栽培についてお答えします。何でもお聞きください！',
+              message: 'こんにちは！$vegetableNameの栽培についてサポートします。植えてから$plantedDays日目ですね。栽培で気になることがあれば何でもお聞きください！',
               isUser: false,
               timestamp: DateTime.now(),
             ),
@@ -60,7 +69,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       setState(() {
         _messages = [
           ChatMessage(
-            message: 'こんにちは！野菜の栽培についてお答えします。何でもお聞きください！',
+            message: 'こんにちは！栽培についてサポートします。何でもお聞きください！',
             isUser: false,
             timestamp: DateTime.now(),
           ),
@@ -88,10 +97,15 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _scrollToBottom();
 
     try {
+      // VegetableProviderから野菜情報を取得
+      final vegetableProvider = Provider.of<VegetableProvider>(context, listen: false);
+      final vegetable = vegetableProvider.getVegetableById(widget.userVegetable.vegetableId);
+      
       final response = await _aiChatService.sendMessage(
         message: userMessage,
         userVegetable: widget.userVegetable,
-        chatHistory: _messages.where((msg) => msg.message != 'こんにちは！野菜の栽培についてお答えします。何でもお聞きください！').toList(),
+        vegetable: vegetable,
+        chatHistory: _messages.where((msg) => !msg.message.startsWith('こんにちは！')).toList(),
       );
       
       setState(() {

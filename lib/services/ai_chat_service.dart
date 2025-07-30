@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/user_vegetable.dart';
+import '../models/vegetable.dart';
 
 class AiChatService {
   static const String _baseUrl = 'https://api.openai.com/v1/chat/completions';
@@ -21,6 +22,7 @@ class AiChatService {
   Future<String> sendMessage({
     required String message,
     required UserVegetable userVegetable,
+    required Vegetable? vegetable,
     required List<ChatMessage> chatHistory,
   }) async {
     // レート制限対策：前回のリクエストから最低2秒待つ
@@ -38,7 +40,7 @@ class AiChatService {
           },
           body: jsonEncode({
             'model': 'gpt-4o-mini',
-            'messages': _buildMessages(message, userVegetable, chatHistory),
+            'messages': _buildMessages(message, userVegetable, vegetable, chatHistory),
             'max_tokens': 1000,
             'temperature': 0.7,
           }),
@@ -110,6 +112,7 @@ class AiChatService {
   List<Map<String, String>> _buildMessages(
     String userMessage,
     UserVegetable userVegetable,
+    Vegetable? vegetable,
     List<ChatMessage> chatHistory,
   ) {
     final messages = <Map<String, String>>[];
@@ -117,7 +120,7 @@ class AiChatService {
     // システムプロンプト
     messages.add({
       'role': 'system',
-      'content': _buildSystemPrompt(userVegetable),
+      'content': _buildSystemPrompt(userVegetable, vegetable),
     });
 
     // 過去の会話履歴を追加
@@ -136,32 +139,68 @@ class AiChatService {
     return messages;
   }
 
-  String _buildSystemPrompt(UserVegetable userVegetable) {
+  String _buildSystemPrompt(UserVegetable userVegetable, Vegetable? vegetable) {
     final plantedDays = userVegetable.daysSincePlanted;
     final plantType = userVegetable.plantType.displayName;
     final location = userVegetable.location.displayName;
+    final vegetableName = vegetable?.name ?? '野菜';
+
+    // 野菜固有の情報を取得
+    final growingTips = vegetable?.growingTips ?? '';
+    final commonProblems = vegetable?.commonProblems ?? '';
+    
+    // 現在の成長段階を判定
+    final currentStage = _getCurrentGrowthStage(userVegetable, vegetable);
 
     return '''
-あなたは家庭菜園の専門家です。初心者にも分かりやすく、親しみやすい口調でアドバイスをしてください。
+あなたは$vegetableNameの栽培に詳しい家庭菜園の専門家です。初心者にも分かりやすく、親しみやすい口調でアドバイスをしてください。
 
-栽培情報：
-- 植付タイプ: $plantType
-- 栽培場所: $location
-- 植えてからの日数: $plantedDays日
+== 現在の栽培状況 ==
+野菜: $vegetableName
+植付タイプ: $plantType
+栽培場所: $location
+植えてからの日数: $plantedDays日
+現在の段階: $currentStage
 
-回答の指針：
-1. 具体的で実践的なアドバイスを提供する
-2. 初心者でも理解しやすい言葉を使う
-3. 必要に応じて作業のタイミングや手順を説明する
-4. 症状がある場合は、可能な原因と対処法を複数提示する
+== $vegetableNameの栽培ポイント ==
+${growingTips.isNotEmpty ? growingTips : '基本的な水やりと日当たり管理を心がけてください。'}
+
+== よくある問題と対策 ==
+${commonProblems.isNotEmpty ? commonProblems : '病害虫や成長不良が見られた場合は、環境条件を見直してください。'}
+
+== 回答の指針 ==
+1. $vegetableNameに特化した具体的で実践的なアドバイスを提供する
+2. 現在の栽培段階（$plantedDays日目）に適した内容にする
+3. 初心者でも理解しやすい言葉を使う
+4. 症状がある場合は、$vegetableName特有の原因と対処法を提示する
 5. 安全性を重視し、農薬等の使用は慎重に案内する
 6. 150文字以内で簡潔に回答する
 
-口調：
-- 丁寧だが親しみやすい
-- 「〜です」「〜ますね」などの敬語
-- 「きっと」「おそらく」など、断定を避ける表現を適度に使う
+口調：丁寧で親しみやすく、「〜ですね」「〜しましょう」など初心者に寄り添う表現を使用
 ''';
+  }
+
+  String _getCurrentGrowthStage(UserVegetable userVegetable, Vegetable? vegetable) {
+    if (vegetable == null) return '成長中';
+    
+    final schedule = vegetable.getScheduleForPlantType(userVegetable.plantType);
+    final daysSincePlanted = userVegetable.daysSincePlanted;
+    
+    // 現在の日数に最も近いタスクを見つける
+    VegetableTask? currentTask;
+    for (final task in schedule.tasks) {
+      if (task.day <= daysSincePlanted) {
+        currentTask = task;
+      } else {
+        break;
+      }
+    }
+    
+    if (currentTask != null) {
+      return '${currentTask.type}期（${currentTask.day}日目以降）';
+    } else {
+      return '発芽・初期成長期';
+    }
   }
 }
 
