@@ -18,6 +18,7 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _currentUser != null;
   User? get currentUser => _currentUser;
+  User? get user => _currentUser; // アカウント設定画面で使用
 
   AuthProvider() {
     _init();
