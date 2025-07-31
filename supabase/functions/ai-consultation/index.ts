@@ -1,17 +1,47 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// 許可されたオリジンのホワイトリスト
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'https://localhost:3000',
+  'https://ssrfnkanoegmflgcvkpv.supabase.co',
+  'https://vegetable-teacher.com', // 本番ドメイン（必要に応じて変更）
+  // Flutterアプリからのリクエストも許可（アプリの場合はnull origin）
+]
+
+const getCorsHeaders = (origin: string | null) => {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : 'null'
+  
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
+  }
 }
 
 const MAX_RETRIES = 3
 const BASE_DELAY = 2000 // 2秒
 
 serve(async (req) => {
+  const origin = req.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
+  
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
+  }
+
+  // オリジン検証 - Flutterアプリは通常nullオリジンなので許可
+  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    console.warn(`Blocked request from unauthorized origin: ${origin}`)
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized origin' }),
+      { 
+        headers: { 'Content-Type': 'application/json' },
+        status: 403 
+      }
+    )
   }
 
   try {
