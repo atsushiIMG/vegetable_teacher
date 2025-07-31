@@ -186,25 +186,34 @@ ${common_problems || '病害虫や成長不良が見られた場合は、環境�
     }
 
     // Supabaseクライアントを初期化（相談履歴を保存する場合）
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing Supabase environment variables:', {
+        hasUrl: !!supabaseUrl,
+        hasServiceKey: !!supabaseServiceKey
+      })
+      // 相談履歴の保存はスキップしてAIレスポンスのみ返す
+    } else {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // 相談履歴をデータベースに保存
-    if (user_vegetable_id) {
-      const { error: dbError } = await supabase
-        .from('consultations')
-        .insert({
-          user_vegetable_id,
-          messages: [
-            { role: 'user', content: message },
-            { role: 'assistant', content: aiResponse }
-          ]
-        })
+      // 相談履歴をデータベースに保存
+      if (user_vegetable_id) {
+        const { error: dbError } = await supabase
+          .from('consultations')
+          .insert({
+            user_vegetable_id,
+            messages: [
+              { role: 'user', content: message },
+              { role: 'assistant', content: aiResponse }
+            ]
+          })
 
-      if (dbError) {
-        console.error('Database error:', dbError)
-        // エラーが発生してもAIの回答は返す
+        if (dbError) {
+          console.error('Database error:', dbError)
+          // エラーが発生してもAIの回答は返す
+        }
       }
     }
 
