@@ -116,6 +116,14 @@ android {
             android:name="flutterEmbedding"
             android:value="2" />
             
+        <!-- Firebase Cloud Messaging -->
+        <service
+            android:name="com.google.firebase.messaging.FirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>
 ```
@@ -408,9 +416,9 @@ android {
 - インターネット権限が設定されているか確認
 
 #### プッシュ通知が届かない
-- Supabase Realtimeの接続状況を確認
+- Firebase Cloud Messagingの設定が正しいか確認
 - 通知権限が許可されているか確認
-- SupabaseNotificationServiceが正しく初期化されているか確認
+- FCMトークンが正しく取得できているか確認
 
 ### デバッグ方法
 ```bash

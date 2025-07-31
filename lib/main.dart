@@ -9,7 +9,6 @@ import 'core/router/app_router.dart';
 import 'providers/auth_provider.dart';
 import 'providers/vegetable_provider.dart';
 import 'providers/notification_provider.dart';
-import 'services/supabase_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,13 +41,6 @@ void main() async {
     url: supabaseUrl,
     anonKey: supabaseAnonKey,
   );
-  
-  // Supabase通知サービス初期化
-  try {
-    await SupabaseNotificationService().initialize();
-  } catch (e) {
-    print('SupabaseNotificationService initialization failed: $e');
-  }
   
   runApp(const VegetableTeacherApp());
 }

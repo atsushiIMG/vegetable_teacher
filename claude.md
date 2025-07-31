@@ -11,12 +11,12 @@
 
 ## 技術スタック
 - **フロントエンド**: Flutter (Android アプリ)
-- **バックエンド**: Supabase Edge Functions (TypeScript/Deno)
+- **バックエンド**: Python (FastAPI) - AI相談機能のみ
 - **データベース**: Supabase (PostgreSQL)
 - **認証**: Supabase Auth（メール認証、カスタムURIスキーム）
 - **ストレージ**: Supabase Storage
-- **プッシュ通知**: Supabase Realtime + Local Notifications
-- **AI**: OpenAI API (GPT-4o-mini) - Edge Functions経由
+- **プッシュ通知**: Supabase Functions + FCM
+- **AI**: OpenAI API (GPT-4o-mini)
 - **パッケージ名**: com.atsudev.vegetable_teacher
 
 ## 主要機能
@@ -186,26 +186,16 @@
 11. しそ
 12. モロヘイヤ
 
-## API設計（Supabase Edge Functions）
+## API設計（Python FastAPI）
 
-### AI相談エンドポイント
-```typescript
-POST /functions/v1/ai-consultation
+### AI相談エンドポイントのみ
+```python
+POST /api/consultation
 {
   "vegetable_type": "トマト",
   "message": "葉っぱが黄色くなってきました",
-  "user_vegetable_id": "uuid",
-  "chat_history": [...過去の会話履歴]
+  "history": [...過去の会話履歴]
 }
-```
-
-### 通知管理エンドポイント
-```typescript
-POST /functions/v1/notification-scheduler
-// 定期実行で通知スケジュールを計算・作成
-
-POST /functions/v1/send-push-notifications  
-// リアルタイム通知を配信
 ```
 
 ## 開発環境セットアップ
@@ -213,7 +203,7 @@ POST /functions/v1/send-push-notifications
 ### 必要なツール
 - **Supabase CLI**: npm install -g supabase
 - **Flutter**: Android アプリ開発用
-- **Deno**: Edge Functions開発用（Supabase CLIに含まれる）
+- **Python 3**: AI相談API開発用
 
 ### Supabaseクラウド開発環境
 - **プロジェクト名**: やさいせんせい-dev
@@ -240,9 +230,9 @@ supabase projects list
 ## 開発順序
 1. ✅ Supabaseセットアップ（認証、DB、Storage）
 2. ✅ 野菜マスタデータ登録（12種類）
-3. ✅ Flutter基本画面実装
-4. ✅ AI相談機能実装（Supabase Edge Functions）
-5. ✅ 通知機能実装（Supabase Realtime + Local Notifications）
+3. Flutter基本画面実装
+4. 通知機能実装（Supabase Functions + FCM）
+5. Python AI相談API実装
 6. フィードバック機能追加
 7. （フェーズ2）撮影モード実装
 8. （フェーズ2）パラパラ漫画機能
@@ -250,6 +240,6 @@ supabase projects list
 
 ## 今後の拡張可能性
 - 野菜の種類追加
-- 天気API連携（雨の日は水やり通知スキップ、Edge Functions経由）
+- 天気API連携（雨の日は水やり通知スキップ）
 - コミュニティ機能（他のユーザーの栽培記録を見る）
-- 画像診断機能（病害虫の判定、Edge Functions + AI統合）
+- 画像診断機能（病害虫の判定）
