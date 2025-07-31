@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/app_text_styles.dart';
+import '../../services/supabase_notification_service.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -12,10 +13,11 @@ class NotificationSettingsScreen extends StatefulWidget {
 
 class _NotificationSettingsScreenState extends State<NotificationSettingsScreen> {
   bool _notificationsEnabled = true;
-  TimeOfDay _morningTime = const TimeOfDay(hour: 7, minute: 0);
-  TimeOfDay _eveningTime = const TimeOfDay(hour: 18, minute: 0);
+  TimeOfDay _notificationTime = const TimeOfDay(hour: 9, minute: 0);
+  bool _weekendNotifications = true;
   double _wateringFrequency = 1.0; // 1.0 = 標準、0.5 = 少なめ、1.5 = 多め
   bool _isLoading = true;
+  final SupabaseNotificationService _notificationService = SupabaseNotificationService();
 
   @override
   void initState() {
@@ -24,37 +26,71 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   }
 
   Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    setState(() {
-      _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+    try {
+      // NotificationServiceから設定を取得
+      final settings = await _notificationService.getNotificationSettings();
+      final prefs = await SharedPreferences.getInstance();
       
-      // 朝の通知時間（デフォルト7:00）
-      final morningHour = prefs.getInt('morning_hour') ?? 7;
-      final morningMinute = prefs.getInt('morning_minute') ?? 0;
-      _morningTime = TimeOfDay(hour: morningHour, minute: morningMinute);
-      
-      // 夕方の通知時間（デフォルト18:00）
-      final eveningHour = prefs.getInt('evening_hour') ?? 18;
-      final eveningMinute = prefs.getInt('evening_minute') ?? 0;
-      _eveningTime = TimeOfDay(hour: eveningHour, minute: eveningMinute);
-      
-      // 水やり頻度（デフォルト1.0）
-      _wateringFrequency = prefs.getDouble('watering_frequency') ?? 1.0;
-      
-      _isLoading = false;
-    });
+      setState(() {
+        if (settings != null) {
+          _notificationsEnabled = settings['notification_enabled'] ?? true;
+          _weekendNotifications = settings['weekend_notifications'] ?? true;
+          
+          // 通知時間の解析
+          final timeString = settings['notification_time'] as String?;
+          if (timeString != null) {
+            final parts = timeString.split(':');
+            if (parts.length >= 2) {
+              final hour = int.tryParse(parts[0]) ?? 9;
+              final minute = int.tryParse(parts[1]) ?? 0;
+              _notificationTime = TimeOfDay(hour: hour, minute: minute);
+            }
+          }
+        }
+        
+        // 水やり頻度はローカルストレージから取得
+        _wateringFrequency = prefs.getDouble('watering_frequency') ?? 1.0;
+        
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('設定の読み込みに失敗しました'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _saveSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    await prefs.setBool('notifications_enabled', _notificationsEnabled);
-    await prefs.setInt('morning_hour', _morningTime.hour);
-    await prefs.setInt('morning_minute', _morningTime.minute);
-    await prefs.setInt('evening_hour', _eveningTime.hour);
-    await prefs.setInt('evening_minute', _eveningTime.minute);
-    await prefs.setDouble('watering_frequency', _wateringFrequency);
+    try {
+      // NotificationServiceに設定を保存
+      await _notificationService.updateNotificationSettings(
+        enabled: _notificationsEnabled,
+        notificationTime: _notificationTime,
+        weekendNotifications: _weekendNotifications,
+      );
+      
+      // 水やり頻度はローカルストレージに保存
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('watering_frequency', _wateringFrequency);
+      
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('設定の保存に失敗しました'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -102,24 +138,24 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           _buildSectionHeader('通知時間'),
           const SizedBox(height: 8),
           _buildTimeTile(
-            title: '朝の通知時間',
-            subtitle: '朝の作業（水やり、観察など）の通知時間',
-            time: _morningTime,
+            title: '通知時間',
+            subtitle: '作業タイミングの通知を受け取る時間',
+            time: _notificationTime,
             onTimeSelected: (time) {
               setState(() {
-                _morningTime = time;
+                _notificationTime = time;
               });
               _saveSettings();
             },
           ),
           const SizedBox(height: 8),
-          _buildTimeTile(
-            title: '夕方の通知時間',
-            subtitle: '夕方の作業（追肥、支柱立てなど）の通知時間',
-            time: _eveningTime,
-            onTimeSelected: (time) {
+          _buildSwitchTile(
+            title: '週末通知',
+            subtitle: '土日も通知を受け取る',
+            value: _weekendNotifications,
+            onChanged: (value) {
               setState(() {
-                _eveningTime = time;
+                _weekendNotifications = value;
               });
               _saveSettings();
             },
@@ -130,6 +166,58 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           _buildSectionHeader('水やり設定'),
           const SizedBox(height: 8),
           _buildFrequencyTile(),
+          const SizedBox(height: 24),
+
+          // テスト通知ボタン
+          _buildSectionHeader('テスト'),
+          const SizedBox(height: 8),
+          Card(
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListTile(
+              leading: Icon(
+                Icons.notifications_active,
+                color: AppColors.primary,
+              ),
+              title: Text(
+                'テスト通知を送信',
+                style: AppTextStyles.body1.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              subtitle: Text(
+                '通知が正常に動作するかテストします',
+                style: AppTextStyles.caption.copyWith(
+                  color: Colors.grey[600],
+                ),
+              ),
+              trailing: const Icon(Icons.send),
+              onTap: () async {
+                try {
+                  await _notificationService.sendTestNotification();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('テスト通知を送信しました'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('テスト通知の送信に失敗しました'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+          ),
           const SizedBox(height: 24),
 
           // 説明テキスト
