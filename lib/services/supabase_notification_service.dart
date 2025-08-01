@@ -88,14 +88,14 @@ class SupabaseNotificationService {
 
   // Supabase リアルタイム通知の初期化
   Future<void> _initializeRealtimeNotifications() async {
-    final user = SupabaseService.instance.currentUser;
+    final user = SupabaseService.currentUser;
     if (user == null) {
       log('User not authenticated, skipping realtime notifications setup');
       return;
     }
 
     // 通知テーブルの変更を監視（UPDATEイベントでsent_atが設定された時）
-    _notificationChannel = SupabaseService.instance.client
+    _notificationChannel = SupabaseService.client
         .channel('notifications:${user.id}')
         .onPostgresChanges(
             event: PostgresChangeEvent.update,
@@ -115,7 +115,7 @@ class SupabaseNotificationService {
       final notification = payload.newRecord;
       if (notification != null) {
         // 現在のユーザーの通知かチェック
-        final currentUser = SupabaseService.instance.currentUser;
+        final currentUser = SupabaseService.currentUser;
         if (currentUser != null && _isNotificationForCurrentUser(notification, currentUser.id)) {
           _showLocalNotificationFromData(notification);
         } else {
@@ -199,7 +199,7 @@ class SupabaseNotificationService {
     bool? weekendNotifications,
   }) async {
     try {
-      final user = SupabaseService.instance.currentUser;
+      final user = SupabaseService.currentUser;
       if (user == null) return;
 
       final updateData = <String, dynamic>{
@@ -215,7 +215,7 @@ class SupabaseNotificationService {
         updateData['weekend_notifications'] = weekendNotifications;
       }
 
-      await SupabaseService.instance.client
+      await SupabaseService.client
           .from('profiles')
           .upsert({
             'id': user.id,
@@ -232,10 +232,10 @@ class SupabaseNotificationService {
   // 通知設定の取得
   Future<Map<String, dynamic>?> getNotificationSettings() async {
     try {
-      final user = SupabaseService.instance.currentUser;
+      final user = SupabaseService.currentUser;
       if (user == null) return null;
 
-      final response = await SupabaseService.instance.client
+      final response = await SupabaseService.client
           .from('profiles')
           .select('notification_enabled, notification_time, weekend_notifications')
           .eq('id', user.id)
@@ -251,16 +251,16 @@ class SupabaseNotificationService {
   // 手動で通知をチェック（プルリフレッシュ用）
   Future<List<Map<String, dynamic>>> checkPendingNotifications() async {
     try {
-      final user = SupabaseService.instance.currentUser;
+      final user = SupabaseService.currentUser;
       if (user == null) return [];
 
       final today = DateTime.now().toIso8601String().split('T')[0];
       
-      final response = await SupabaseService.instance.client
+      final response = await SupabaseService.client
           .from('notifications')
           .select('*, user_vegetables!inner(vegetable:vegetables(name))')
           .eq('scheduled_date', today)
-          .is_('sent_at', null)
+          .isFilter('sent_at', null)
           .order('created_at', ascending: false);
 
       final notifications = response as List<dynamic>;
@@ -268,10 +268,10 @@ class SupabaseNotificationService {
       // ローカル通知として表示
       for (final notification in notifications) {
         final vegetableName = notification['user_vegetables']?['vegetable']?['name'];
-        final notificationData = {
+        final notificationData = Map<String, dynamic>.from({
           ...notification,
           'vegetable_name': vegetableName,
-        };
+        });
         await _showLocalNotificationFromData(notificationData);
       }
 
@@ -315,10 +315,10 @@ class SupabaseNotificationService {
   // 通知履歴を取得
   Future<List<Map<String, dynamic>>> getNotificationHistory({int limit = 50}) async {
     try {
-      final user = SupabaseService.instance.currentUser;
+      final user = SupabaseService.currentUser;
       if (user == null) return [];
 
-      final response = await SupabaseService.instance.client
+      final response = await SupabaseService.client
           .from('notifications')
           .select('*, user_vegetables!inner(vegetable:vegetables(name))')
           .order('scheduled_date', ascending: false)
