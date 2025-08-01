@@ -104,9 +104,9 @@ supabase projects list
 - [ ] 野菜専門知識の整理
 
 ### 通知機能開発の準備
-- [ ] Firebase プロジェクトセットアップ
-- [ ] FCM設定の調査
-- [ ] 通知タイミング計算ロジックの詳細設計
+- [x] Supabase Realtime通知機能実装
+- [x] Local Notifications設定完了
+- [x] 通知タイミング計算ロジックの実装完了
 
 ## 🤔 開発中の疑問・検討事項
 
@@ -129,7 +129,7 @@ supabase projects list
 
 ### 技術資料
 - [Supabase Flutter Documentation](https://supabase.com/docs/reference/dart)
-- [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging)
+- [Supabase Realtime Documentation](https://supabase.com/docs/guides/realtime)
 - [OpenAI API Documentation](https://platform.openai.com/docs)
 
 ### 農業関連資料

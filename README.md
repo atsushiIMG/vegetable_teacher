@@ -55,7 +55,7 @@ flutter build appbundle --dart-define=SUPABASE_ANON_KEY=your-key-here
 - **認証**: Supabase Auth
 - **ストレージ**: Supabase Storage
 - **AI機能**: OpenAI API (予定)
-- **通知**: Firebase Cloud Messaging
+- **通知**: Supabase Realtime + Local Notifications
 
 ## 📱 主要機能
 
