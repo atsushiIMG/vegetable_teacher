@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/app_text_styles.dart';
 import '../../services/supabase_notification_service.dart';
@@ -17,6 +18,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   bool _weekendNotifications = true;
   double _wateringFrequency = 1.0; // 1.0 = 標準、0.5 = 少なめ、1.5 = 多め
   bool _isLoading = true;
+  PermissionStatus _permissionStatus = PermissionStatus.denied;
   final SupabaseNotificationService _notificationService = SupabaseNotificationService();
 
   @override
@@ -27,6 +29,9 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
   Future<void> _loadSettings() async {
     try {
+      // 通知権限の状態を取得
+      _permissionStatus = await _notificationService.getNotificationPermissionStatus();
+      
       // NotificationServiceから設定を取得
       final settings = await _notificationService.getNotificationSettings();
       final prefs = await SharedPreferences.getInstance();
@@ -118,6 +123,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // 通知権限状態表示
+          _buildPermissionStatusCard(),
+          const SizedBox(height: 24),
+          
           // 通知の有効/無効
           _buildSectionHeader('基本設定'),
           const SizedBox(height: 8),
@@ -448,5 +457,121 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     if (frequency <= 1.2) return '標準';
     if (frequency <= 1.4) return 'やや多め';
     return '多め（湿潤気味）';
+  }
+
+  Widget _buildPermissionStatusCard() {
+    Color statusColor;
+    String statusText;
+    String statusDescription;
+    IconData statusIcon;
+
+    switch (_permissionStatus) {
+      case PermissionStatus.granted:
+        statusColor = Colors.green;
+        statusText = '通知権限: 許可済み';
+        statusDescription = '通知を正常に受け取ることができます';
+        statusIcon = Icons.check_circle;
+        break;
+      case PermissionStatus.denied:
+        statusColor = Colors.orange;
+        statusText = '通知権限: 拒否';
+        statusDescription = '通知を受け取るには権限の許可が必要です';
+        statusIcon = Icons.warning;
+        break;
+      case PermissionStatus.permanentlyDenied:
+        statusColor = Colors.red;
+        statusText = '通知権限: 完全に拒否';
+        statusDescription = '設定アプリから手動で権限を有効にしてください';
+        statusIcon = Icons.block;
+        break;
+      default:
+        statusColor = Colors.grey;
+        statusText = '通知権限: 未確認';
+        statusDescription = '権限の状態を確認中です';
+        statusIcon = Icons.help;
+    }
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  statusIcon,
+                  color: statusColor,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    statusText,
+                    style: AppTextStyles.body1.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              statusDescription,
+              style: AppTextStyles.caption.copyWith(
+                color: Colors.grey[600],
+              ),
+            ),
+            if (_permissionStatus != PermissionStatus.granted) ...[
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: _handlePermissionRequest,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: statusColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  _permissionStatus == PermissionStatus.permanentlyDenied
+                      ? '設定アプリを開く'
+                      : '権限を許可する',
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handlePermissionRequest() async {
+    if (_permissionStatus == PermissionStatus.permanentlyDenied) {
+      // 設定アプリを開く
+      await openAppSettings();
+    } else {
+      // 権限を要求
+      final result = await Permission.notification.request();
+      setState(() {
+        _permissionStatus = result;
+      });
+      
+      if (result.isGranted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('通知権限が許可されました'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    }
   }
 }

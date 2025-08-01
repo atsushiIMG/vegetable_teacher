@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/services/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SupabaseNotificationService {
   static final SupabaseNotificationService _instance = SupabaseNotificationService._internal();
@@ -21,6 +22,9 @@ class SupabaseNotificationService {
     if (_isInitialized) return;
 
     try {
+      // 通知権限の確認・要求
+      await _requestNotificationPermissions();
+
       // ローカル通知初期化
       await _initializeLocalNotifications();
 
@@ -33,6 +37,31 @@ class SupabaseNotificationService {
       log('SupabaseNotificationService initialization failed: $e');
       rethrow;
     }
+  }
+
+  // 通知権限の要求
+  Future<bool> _requestNotificationPermissions() async {
+    final status = await Permission.notification.status;
+    log('Current notification permission status: $status');
+
+    if (status.isDenied) {
+      final result = await Permission.notification.request();
+      log('Notification permission request result: $result');
+      return result.isGranted;
+    }
+
+    return status.isGranted;
+  }
+
+  // 通知権限の状態を確認
+  Future<PermissionStatus> getNotificationPermissionStatus() async {
+    return await Permission.notification.status;
+  }
+
+  // 通知権限が許可されているかチェック
+  Future<bool> hasNotificationPermission() async {
+    final status = await getNotificationPermissionStatus();
+    return status.isGranted;
   }
 
   // ローカル通知の初期化
@@ -284,6 +313,23 @@ class SupabaseNotificationService {
 
   // テスト通知の送信
   Future<void> sendTestNotification() async {
+    log('sendTestNotification called');
+    
+    // 初期化状態をチェック
+    if (!_isInitialized) {
+      log('Service not initialized, attempting to initialize...');
+      await initialize();
+    }
+
+    // 通知権限をチェック
+    final hasPermission = await hasNotificationPermission();
+    if (!hasPermission) {
+      log('Notification permission not granted');
+      throw Exception('通知権限が許可されていません。設定で通知を有効にしてください。');
+    }
+
+    log('Sending test notification...');
+
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'vegetable_tasks',
       'やさいのお世話',
@@ -304,12 +350,18 @@ class SupabaseNotificationService {
       iOS: iosDetails,
     );
 
-    await _localNotifications.show(
-      999,
-      '🌱 テスト通知',
-      'やさいせんせいの通知が正常に動作しています',
-      platformDetails,
-    );
+    try {
+      await _localNotifications.show(
+        999,
+        '🌱 テスト通知',
+        'やさいせんせいの通知が正常に動作しています',
+        platformDetails,
+      );
+      log('Test notification sent successfully');
+    } catch (e) {
+      log('Failed to send test notification: $e');
+      rethrow;
+    }
   }
 
   // 通知履歴を取得
