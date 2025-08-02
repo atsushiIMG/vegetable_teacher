@@ -141,6 +141,7 @@ serve(async (req) => {
 
       if (insertError) {
         console.error('Failed to insert notifications:', insertError)
+        throw insertError
       }
     }
 
