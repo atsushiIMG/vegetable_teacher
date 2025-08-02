@@ -70,13 +70,18 @@ serve(async (req) => {
 
         // Supabaseのリアルタイム機能を使って通知を配信
         // sent_atを更新することで、クライアント側でリアルタイム通知が発火される
-        await supabase
+        const { error: updateError } = await supabase
           .from('notifications')
           .update({ 
             sent_at: new Date().toISOString(),
             vegetable_name: vegetableName
           })
           .eq('id', notification.id)
+
+        if (updateError) {
+          console.error(`Failed to update notification ${notification.id}:`, updateError)
+          throw updateError
+        }
 
         results.push({
           notification_id: notification.id,
