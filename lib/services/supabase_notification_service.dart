@@ -229,29 +229,44 @@ class SupabaseNotificationService {
   }) async {
     try {
       final user = SupabaseService.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        log('User not authenticated, cannot update notification settings');
+        throw Exception('ユーザーが認証されていません');
+      }
 
-      final updateData = <String, dynamic>{
+      // 現在の設定を取得
+      final currentSettings = await getNotificationSettings();
+      
+      // JSONB形式で設定を構築
+      final notificationSettings = <String, dynamic>{
+        // 既存の設定を保持
+        'watering_reminders': currentSettings?['watering_reminders'] ?? true,
+        'task_reminders': currentSettings?['task_reminders'] ?? true,
+        'harvest_reminders': currentSettings?['harvest_reminders'] ?? true,
+        'general_tips': currentSettings?['general_tips'] ?? true,
+        // 新しい設定を更新
         'notification_enabled': enabled,
-        'updated_at': DateTime.now().toIso8601String(),
       };
 
       if (notificationTime != null) {
-        updateData['notification_time'] = '${notificationTime.hour.toString().padLeft(2, '0')}:${notificationTime.minute.toString().padLeft(2, '0')}:00';
+        notificationSettings['notification_time'] = 
+            '${notificationTime.hour.toString().padLeft(2, '0')}:${notificationTime.minute.toString().padLeft(2, '0')}:00';
       }
 
       if (weekendNotifications != null) {
-        updateData['weekend_notifications'] = weekendNotifications;
+        notificationSettings['weekend_notifications'] = weekendNotifications;
       }
 
-      await SupabaseService.client
-          .from('profiles')
-          .upsert({
-            'id': user.id,
-            ...updateData,
-          });
+      // 専用関数を使用して更新
+      await SupabaseService.client.rpc(
+        'update_notification_settings',
+        params: {
+          'p_user_id': user.id,
+          'p_settings': notificationSettings,
+        },
+      );
 
-      log('Notification settings updated');
+      log('Notification settings updated successfully');
     } catch (e) {
       log('Failed to update notification settings: $e');
       rethrow;
@@ -262,15 +277,27 @@ class SupabaseNotificationService {
   Future<Map<String, dynamic>?> getNotificationSettings() async {
     try {
       final user = SupabaseService.currentUser;
-      if (user == null) return null;
+      if (user == null) {
+        log('User not authenticated, cannot get notification settings');
+        return null;
+      }
 
-      final response = await SupabaseService.client
-          .from('profiles')
-          .select('notification_enabled, notification_time, weekend_notifications')
-          .eq('id', user.id)
-          .single();
+      // 専用関数を使用して設定を取得
+      final response = await SupabaseService.client.rpc(
+        'get_user_notification_settings',
+        params: {
+          'p_user_id': user.id,
+        },
+      );
 
-      return response;
+      log('Retrieved notification settings: $response');
+      
+      // JSONB形式のレスポンスを返す
+      if (response != null) {
+        return Map<String, dynamic>.from(response as Map);
+      }
+      
+      return null;
     } catch (e) {
       log('Failed to get notification settings: $e');
       return null;

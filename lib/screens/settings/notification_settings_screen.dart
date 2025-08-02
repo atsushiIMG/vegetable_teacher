@@ -38,12 +38,13 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       
       setState(() {
         if (settings != null) {
+          // JSONB形式のデータから設定を取得
           _notificationsEnabled = settings['notification_enabled'] ?? true;
           _weekendNotifications = settings['weekend_notifications'] ?? true;
           
           // 通知時間の解析
           final timeString = settings['notification_time'] as String?;
-          if (timeString != null) {
+          if (timeString != null && timeString.isNotEmpty) {
             final parts = timeString.split(':');
             if (parts.length >= 2) {
               final hour = int.tryParse(parts[0]) ?? 9;
