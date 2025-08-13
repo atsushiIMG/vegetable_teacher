@@ -33,6 +33,7 @@ serve(async (req) => {
       .select(`
         *,
         user_vegetables!inner(
+          user_id,
           vegetable:vegetables(name)
         )
       `)
@@ -44,19 +45,45 @@ serve(async (req) => {
     }
 
     const results = []
+    const now = new Date()
+    const currentHour = now.getHours() // 現在の時間（0-23）
 
     for (const notification of (notifications as any[])) {
       try {
         // 通知設定をチェック
         const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('notification_enabled')
-          .eq('id', notification.user_id)
+          .from('user_profiles')
+          .select('notification_settings')
+          .eq('id', notification.user_vegetables.user_id)
           .single()
 
-        if (profileError || !profile?.notification_enabled) {
-          console.log(`Skipping notification for user ${notification.user_id}: disabled`)
+        if (profileError) {
+          console.log(`Failed to get profile for user ${notification.user_vegetables.user_id}:`, profileError)
           continue
+        }
+
+        // 水やり通知が有効かチェック
+        const wateringEnabled = profile?.notification_settings?.watering_reminders
+        if (!wateringEnabled) {
+          console.log(`Skipping notification for user ${notification.user_vegetables.user_id}: watering reminders disabled`)
+          continue
+        }
+
+        // ユーザーの通知時間をチェック
+        const notificationTime = profile?.notification_settings?.notification_time
+        if (!notificationTime) {
+          console.log(`No notification time set for user ${notification.user_vegetables.user_id}, using default hour 7`)
+          // デフォルト時間（朝7時）を使用
+          if (currentHour !== 7) {
+            continue
+          }
+        } else {
+          // 通知時間をパース（例: "07:30" → 7）
+          const userHour = parseInt(notificationTime.split(':')[0])
+          if (currentHour !== userHour) {
+            console.log(`Not yet time for user ${notification.user_vegetables.user_id}: current=${currentHour}, user_time=${userHour}`)
+            continue
+          }
         }
 
         // 野菜名を取得

@@ -1,0 +1,40 @@
+name: Daily Notification Scheduler
+
+on:
+  schedule:
+    # 毎日 UTC 15:00 = JST 00:00 (日本時間の午前0時)
+    - cron: '0 15 * * *'
+  
+  # 手動実行も可能
+  workflow_dispatch:
+
+jobs:
+  create-daily-notifications:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Create daily notifications
+        run: |
+          echo "Creating daily notifications at $(date)"
+          
+          # notification-schedulerを実行
+          response=$(curl -s -X POST '${{ secrets.SUPABASE_URL }}/functions/v1/notification-scheduler' \
+            -H 'Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}' \
+            -H 'Content-Type: application/json' \
+            --data '{}')
+          
+          echo "Response: $response"
+          
+          # レスポンスをチェック
+          if echo "$response" | grep -q '"success":true'; then
+            echo "✅ Notification scheduler executed successfully"
+          else
+            echo "❌ Notification scheduler failed"
+            echo "$response"
+            exit 1
+          fi
+
+      - name: Log execution
+        run: |
+          echo "Daily notification scheduler completed at $(date)"
+          echo "Next execution: tomorrow at JST 00:00"

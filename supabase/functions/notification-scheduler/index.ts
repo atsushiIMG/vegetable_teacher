@@ -69,17 +69,24 @@ serve(async (req) => {
       const plantedDate = new Date(userVeg.planted_date)
       const daysSincePlanted = Math.floor((today.getTime() - plantedDate.getTime()) / (1000 * 60 * 60 * 24))
       
-      const schedule = userVeg.vegetable.schedule as VegetableSchedule
+      // plant_typeに応じて適切なスケジュールを取得
+      const scheduleData = userVeg.vegetable.schedule as any
+      const plantTypeKey = userVeg.plant_type === 'seed' ? 'seed_schedule' : 'seedling_schedule'
+      const schedule = scheduleData[plantTypeKey] as VegetableSchedule
+      
+      if (!schedule || !schedule.tasks) {
+        console.warn(`No valid schedule found for ${userVeg.vegetable.name} with plant_type: ${userVeg.plant_type}`)
+        continue
+      }
+      
       const adjustments = userVeg.schedule_adjustments || {}
 
       // 作業タスクの通知をチェック
       for (const task of schedule.tasks) {
         let taskDay = task.day
         
-        // 種の場合は追加の日数を考慮
-        if (userVeg.plant_type === 'seed' && task.type !== '種まき') {
-          taskDay += 7 // 種の場合は発芽期間を考慮
-        }
+        // 種の場合は種まきスケジュール、苗の場合は植え付けスケジュールを使用
+        // 既に適切なスケジュールを選択済みなので、追加調整は不要
 
         // 個別調整があれば適用
         const adjustmentKey = `${task.type}_adjustment`
@@ -91,11 +98,8 @@ serve(async (req) => {
         if (daysSincePlanted === taskDay) {
           notifications.push({
             user_vegetable_id: userVeg.id,
-            user_id: userVeg.user_id,
             task_type: task.type,
-            description: task.description,
-            scheduled_date: today.toISOString().split('T')[0],
-            vegetable_name: userVeg.vegetable.name
+            scheduled_date: today.toISOString().split('T')[0]
           })
         }
       }
@@ -112,11 +116,8 @@ serve(async (req) => {
       if (daysSincePlanted > 0 && daysSincePlanted % finalWateringInterval === 0) {
         notifications.push({
           user_vegetable_id: userVeg.id,
-          user_id: userVeg.user_id,
           task_type: '水やり',
-          description: `${userVeg.vegetable.name}に水やりをしましょう`,
-          scheduled_date: today.toISOString().split('T')[0],
-          vegetable_name: userVeg.vegetable.name
+          scheduled_date: today.toISOString().split('T')[0]
         })
       }
 
@@ -124,11 +125,8 @@ serve(async (req) => {
       if (schedule.fertilizer_interval && daysSincePlanted > 0 && daysSincePlanted % schedule.fertilizer_interval === 0) {
         notifications.push({
           user_vegetable_id: userVeg.id,
-          user_id: userVeg.user_id,
           task_type: '追肥',
-          description: `${userVeg.vegetable.name}に追肥をしましょう`,
-          scheduled_date: today.toISOString().split('T')[0],
-          vegetable_name: userVeg.vegetable.name
+          scheduled_date: today.toISOString().split('T')[0]
         })
       }
     }
