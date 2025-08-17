@@ -402,12 +402,7 @@ class AuthWrapper extends StatelessWidget {
   "watering_reminders": true,
   "task_reminders": true,
   "harvest_reminders": true,
-  "general_tips": true,
-  "quiet_hours": {
-    "enabled": false,
-    "start": "22:00",
-    "end": "08:00"
-  }
+  "general_tips": true
 }
 ```
 

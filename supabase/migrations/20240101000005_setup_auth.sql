@@ -12,12 +12,7 @@ CREATE TABLE user_profiles (
         "watering_reminders": true,
         "task_reminders": true,
         "harvest_reminders": true,
-        "general_tips": true,
-        "quiet_hours": {
-            "enabled": false,
-            "start": "22:00",
-            "end": "08:00"
-        }
+        "general_tips": true
     }',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

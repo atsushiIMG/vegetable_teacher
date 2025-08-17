@@ -1,0 +1,54 @@
+name: Hourly Push Notifications
+
+on:
+  schedule:
+    # 毎時0分に実行（1時間ごと）
+    - cron: '0 * * * *'
+  
+  # 手動実行も可能
+  workflow_dispatch:
+
+jobs:
+  send-notifications:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Send push notifications
+        run: |
+          current_utc_time=$(date -u +"%H:%M")
+          current_jst_hour=$(TZ=Asia/Tokyo date +"%H")
+          echo "Sending push notifications at UTC: $current_utc_time (JST: ${current_jst_hour}:00)"
+          
+          # send-push-notificationsを実行
+          response=$(curl -s -X POST '${{ secrets.SUPABASE_URL }}/functions/v1/send-push-notifications' \
+            -H 'Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}' \
+            -H 'Content-Type: application/json' \
+            --data '{}')
+          
+          echo "Response: $response"
+          
+          # レスポンスをチェック
+          if echo "$response" | grep -q '"success":true'; then
+            # 送信された通知数を抽出
+            sent_count=$(echo "$response" | grep -o '"processed":[0-9]*' | cut -d':' -f2)
+            results_count=$(echo "$response" | grep -o '"results":\[[^]]*\]' | grep -o '"status":"sent_via_realtime"' | wc -l)
+            
+            echo "✅ Push notifications executed successfully"
+            echo "📊 Processed: $sent_count notifications"
+            echo "📨 Sent: $results_count notifications"
+            
+            if [ "$results_count" -gt 0 ]; then
+              echo "🎉 Notifications delivered to users!"
+            else
+              echo "ℹ️ No notifications sent (no users scheduled for this hour)"
+            fi
+          else
+            echo "❌ Push notifications failed"
+            echo "$response"
+            exit 1
+          fi
+
+      - name: Log execution
+        run: |
+          echo "Hourly push notifications completed at $(TZ=Asia/Tokyo date)"
+          echo "Next execution: $(TZ=Asia/Tokyo date -d '+1 hour' +'%Y-%m-%d %H:00')"
