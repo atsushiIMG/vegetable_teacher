@@ -27,6 +27,16 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // JST（日本標準時）で現在日時を取得
+    const now = new Date()
+    // UTCでなければエラーにする（将来他のタイムゾーンで動かす場合の安全策）
+    if (now.getTimezoneOffset() !== 0) {
+      throw new Error('このバッチはUTCタイムゾーンで実行する必要があります。')
+    }
+    // JST時刻を計算
+    const jstOffsetMs = 9 * 60 * 60 * 1000 // JSTはUTC+9時間
+    const today = new Date(now.getTime() + jstOffsetMs)
+
     // データベースに通知を直接挿入（リアルタイム通知を発火）
     const { data: notifications, error } = await supabase
       .from('notifications')
@@ -38,15 +48,14 @@ serve(async (req) => {
         )
       `)
       .is('sent_at', null)
-      .eq('scheduled_date', new Date().toISOString().split('T')[0])
+      .eq('scheduled_date', today.toISOString().split('T')[0])
 
     if (error) {
       throw error
     }
 
     const results = []
-    const now = new Date()
-    const currentHour = now.getHours() // 現在の時間（0-23）
+    const currentHour = today.getHours() // 現在の時間（0-23）
 
     for (const notification of (notifications as any[])) {
       try {
@@ -58,21 +67,19 @@ serve(async (req) => {
           .single()
 
         if (profileError) {
-          console.log(`Failed to get profile for user ${notification.user_vegetables.user_id}:`, profileError)
           continue
         }
 
         // 水やり通知が有効かチェック
         const wateringEnabled = profile?.notification_settings?.watering_reminders
         if (!wateringEnabled) {
-          console.log(`Skipping notification for user ${notification.user_vegetables.user_id}: watering reminders disabled`)
           continue
         }
 
         // ユーザーの通知時間をチェック
         const notificationTime = profile?.notification_settings?.notification_time
+        
         if (!notificationTime) {
-          console.log(`No notification time set for user ${notification.user_vegetables.user_id}, using default hour 7`)
           // デフォルト時間（朝7時）を使用
           if (currentHour !== 7) {
             continue
@@ -81,7 +88,6 @@ serve(async (req) => {
           // 通知時間をパース（例: "07:30" → 7）
           const userHour = parseInt(notificationTime.split(':')[0])
           if (currentHour !== userHour) {
-            console.log(`Not yet time for user ${notification.user_vegetables.user_id}: current=${currentHour}, user_time=${userHour}`)
             continue
           }
         }
