@@ -181,9 +181,10 @@ class SupabaseNotificationService {
     final taskType = data['task_type'] as String?;
     final description = data['description'] as String?;
     final vegetableName = data['vegetable_name'] as String?;
+    final id = data['id'];
 
     // 必須フィールドチェック
-    if (taskType == null || description == null) {
+    if (taskType == null || description == null || id == null) {
       return;
     }
 
@@ -215,7 +216,7 @@ class SupabaseNotificationService {
 
     try {
       await _localNotifications.show(
-        data['id'].hashCode,
+        id.hashCode,
         title,
         description,
         platformDetails,
