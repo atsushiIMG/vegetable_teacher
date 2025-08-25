@@ -51,8 +51,5 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 GRANT USAGE ON SCHEMA realtime TO authenticated;
 GRANT SELECT ON notifications TO authenticated;
 
--- Realtimeの設定（publication作成）
-BEGIN;
-  DROP PUBLICATION IF EXISTS supabase_realtime;
-  CREATE PUBLICATION supabase_realtime FOR TABLE notifications;
-COMMIT;
+-- Realtimeの設定（notificationsテーブルをpublicationに追加）
+ALTER PUBLICATION supabase_realtime ADD TABLE notifications;

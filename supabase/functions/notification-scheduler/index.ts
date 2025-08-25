@@ -62,7 +62,15 @@ serve(async (req) => {
       throw error
     }
 
-    const today = new Date()
+    // JST（日本標準時）で現在日時を取得
+    const now = new Date()
+    // UTCでなければエラーにする（将来他のタイムゾーンで動かす場合の安全策）
+    if (now.getTimezoneOffset() !== 0) {
+      throw new Error('このバッチはUTCタイムゾーンで実行する必要があります。')
+    }
+    // JST時刻を計算
+    const jstOffsetMs = 9 * 60 * 60 * 1000 // JSTはUTC+9時間
+    const today = new Date(now.getTime() + jstOffsetMs)
     const notifications = []
 
     for (const userVeg of (userVegetables as any[])) {
@@ -75,7 +83,6 @@ serve(async (req) => {
       const schedule = scheduleData[plantTypeKey] as VegetableSchedule
       
       if (!schedule || !schedule.tasks) {
-        console.warn(`No valid schedule found for ${userVeg.vegetable.name} with plant_type: ${userVeg.plant_type}`)
         continue
       }
       
@@ -98,7 +105,9 @@ serve(async (req) => {
         if (daysSincePlanted === taskDay) {
           notifications.push({
             user_vegetable_id: userVeg.id,
+            user_id: userVeg.user_id,
             task_type: task.type,
+            description: `${userVeg.vegetable.name}の${task.type}の時間です`,
             scheduled_date: today.toISOString().split('T')[0]
           })
         }
@@ -116,7 +125,9 @@ serve(async (req) => {
       if (daysSincePlanted > 0 && daysSincePlanted % finalWateringInterval === 0) {
         notifications.push({
           user_vegetable_id: userVeg.id,
+          user_id: userVeg.user_id,
           task_type: '水やり',
+          description: `${userVeg.vegetable.name}の水やりの時間です`,
           scheduled_date: today.toISOString().split('T')[0]
         })
       }
@@ -125,7 +136,9 @@ serve(async (req) => {
       if (schedule.fertilizer_interval && daysSincePlanted > 0 && daysSincePlanted % schedule.fertilizer_interval === 0) {
         notifications.push({
           user_vegetable_id: userVeg.id,
+          user_id: userVeg.user_id,
           task_type: '追肥',
+          description: `${userVeg.vegetable.name}の追肥の時間です`,  // description追加
           scheduled_date: today.toISOString().split('T')[0]
         })
       }

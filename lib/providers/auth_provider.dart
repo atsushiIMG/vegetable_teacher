@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../core/services/supabase_service.dart';
+import '../services/supabase_notification_service.dart';
 
 /// 認証状態管理プロバイダー
 class AuthProvider extends ChangeNotifier {
@@ -38,12 +39,25 @@ class AuthProvider extends ChangeNotifier {
 
     // 現在のユーザー状態を取得
     _currentUser = SupabaseService.currentUser;
+    
+    // アプリ起動時にすでにログイン済みの場合、通知サービスを初期化
+    if (_currentUser != null) {
+      debugPrint('User already logged in at startup, initializing notification service...');
+      _initializeNotificationService();
+    }
 
     // 認証状態の変更を監視（StreamSubscriptionを保存）
     _authSubscription = SupabaseService.authStateChanges.listen((
       AuthState data,
     ) {
+      final previousUser = _currentUser;
       _currentUser = data.session?.user;
+      
+      // ユーザーがログインした場合、通知サービスを再初期化
+      if (previousUser == null && _currentUser != null) {
+        _initializeNotificationService();
+      }
+      
       notifyListeners();
     });
   }
@@ -145,6 +159,15 @@ class AuthProvider extends ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  /// 通知サービスの初期化（ログイン後）
+  Future<void> _initializeNotificationService() async {
+    try {
+      await SupabaseNotificationService().initialize();
+    } catch (e) {
+      debugPrint('Failed to reinitialize SupabaseNotificationService: $e');
+    }
   }
 
 
