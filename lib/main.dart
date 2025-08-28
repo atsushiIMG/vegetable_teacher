@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:go_router/go_router.dart';
 
 import 'core/themes/app_theme.dart';
 import 'core/constants/app_constants.dart';
@@ -72,7 +71,7 @@ class VegetableTeacherApp extends StatelessWidget {
         title: AppConstants.appName,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        routerConfig: AppRouter.createRouter(),
+        routerConfig: AppRouter.createRouter(navigatorKey: navigatorKey),
         debugShowCheckedModeBanner: false,
       ),
     );
