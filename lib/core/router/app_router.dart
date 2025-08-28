@@ -14,9 +14,10 @@ import '../../screens/settings/notification_settings_screen.dart';
 
 /// アプリ全体のルーティング設定
 class AppRouter {
-  static GoRouter createRouter() {
+  static GoRouter createRouter({GlobalKey<NavigatorState>? navigatorKey}) {
     return GoRouter(
       initialLocation: '/',
+      navigatorKey: navigatorKey,
       routes: [
         // 認証画面
         GoRoute(

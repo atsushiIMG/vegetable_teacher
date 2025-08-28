@@ -86,23 +86,10 @@ serve(async (req) => {
         continue
       }
       
-      const adjustments = userVeg.schedule_adjustments || {}
-
       // 作業タスクの通知をチェック
       for (const task of schedule.tasks) {
-        let taskDay = task.day
-        
-        // 種の場合は種まきスケジュール、苗の場合は植え付けスケジュールを使用
-        // 既に適切なスケジュールを選択済みなので、追加調整は不要
-
-        // 個別調整があれば適用
-        const adjustmentKey = `${task.type}_adjustment`
-        if (adjustments[adjustmentKey]) {
-          taskDay += adjustments[adjustmentKey]
-        }
-
         // 通知日かチェック
-        if (daysSincePlanted === taskDay) {
+        if (daysSincePlanted === task.day) {
           notifications.push({
             user_vegetable_id: userVeg.id,
             user_id: userVeg.user_id,
@@ -114,22 +101,29 @@ serve(async (req) => {
       }
 
       // 水やり通知をチェック
-      const wateringInterval = schedule.watering_base_interval
+      const baseWateringInterval = schedule.watering_base_interval
       const seasonMultiplier = getSeasonMultiplier(today)
-      const adjustedWateringInterval = Math.round(wateringInterval * seasonMultiplier)
       
-      // 個別調整があれば適用
-      const wateringAdjustment = adjustments.watering_adjustment || 0
-      const finalWateringInterval = adjustedWateringInterval + wateringAdjustment
+      // 最終的な水やり間隔を計算（季節係数のみ）
+      let finalWateringInterval = Math.round(baseWateringInterval * seasonMultiplier)
+      
+      // 最小間隔を1日、最大間隔を14日に制限
+      finalWateringInterval = Math.max(finalWateringInterval, 1)
+      finalWateringInterval = Math.min(finalWateringInterval, 14)
 
       if (daysSincePlanted > 0 && daysSincePlanted % finalWateringInterval === 0) {
-        notifications.push({
-          user_vegetable_id: userVeg.id,
-          user_id: userVeg.user_id,
-          task_type: '水やり',
-          description: `${userVeg.vegetable.name}の水やりの時間です`,
-          scheduled_date: today.toISOString().split('T')[0]
-        })
+        // シンプルな重複チェックのみ
+        const hasNotificationToday = await checkTodayWateringNotification(supabase, userVeg.id, today)
+        
+        if (!hasNotificationToday) {
+          notifications.push({
+            user_vegetable_id: userVeg.id,
+            user_id: userVeg.user_id,
+            task_type: '水やり',
+            description: `${userVeg.vegetable.name}の水やりの時間です。土の状態を確認してください。`,
+            scheduled_date: today.toISOString().split('T')[0]
+          })
+        }
       }
 
       // 追肥通知をチェック
@@ -196,5 +190,35 @@ function getSeasonMultiplier(date: Date): number {
   } else {
     // 春・秋: 基準通り
     return 1.0
+  }
+}
+
+// 今日の水やり通知が既に存在するかチェック（シンプル版）
+async function checkTodayWateringNotification(
+  supabase: any, 
+  userVegetableId: string, 
+  today: Date
+): Promise<boolean> {
+  try {
+    const todayString = today.toISOString().split('T')[0]
+    
+    const { data: existingNotifications, error } = await supabase
+      .from('notifications')
+      .select('id')
+      .eq('user_vegetable_id', userVegetableId)
+      .eq('task_type', '水やり')
+      .eq('scheduled_date', todayString)
+      .limit(1)
+    
+    if (error) {
+      console.error('Error checking today notifications:', error)
+      return false // エラーの場合は重複なしとみなす
+    }
+    
+    return existingNotifications && existingNotifications.length > 0
+    
+  } catch (error) {
+    console.error('Error in checkTodayWateringNotification:', error)
+    return false
   }
 }

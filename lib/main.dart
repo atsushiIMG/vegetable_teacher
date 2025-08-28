@@ -11,6 +11,9 @@ import 'providers/vegetable_provider.dart';
 import 'providers/notification_provider.dart';
 import 'services/supabase_notification_service.dart';
 
+// グローバルナビゲーターキー
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -68,7 +71,7 @@ class VegetableTeacherApp extends StatelessWidget {
         title: AppConstants.appName,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        routerConfig: AppRouter.createRouter(),
+        routerConfig: AppRouter.createRouter(navigatorKey: navigatorKey),
         debugShowCheckedModeBanner: false,
       ),
     );

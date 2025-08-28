@@ -102,10 +102,8 @@ flutter:
 
   # Assets（画像・アイコン・フォント等）
   assets:
-    - assets/images/
     - assets/images/vegetables/
     - assets/icons/
-    - assets/fonts/
     - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
