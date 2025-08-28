@@ -4,9 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:go_router/go_router.dart';
 import '../core/services/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../main.dart';
 
 class SupabaseNotificationService {
   static final SupabaseNotificationService _instance =
@@ -237,11 +239,44 @@ class SupabaseNotificationService {
 
   // 通知データの処理
   void _handleNotificationData(Map<String, dynamic> data) {
-    final userVegetableId = data['user_vegetable_id'];
+    try {
+      final notificationId = data['id'];
+      final userVegetableId = data['user_vegetable_id'];
+      final vegetableName = data['vegetable_name'];
+      final taskType = data['task_type'];
 
-    if (userVegetableId != null) {
-      // 野菜詳細画面に遷移
-      // TODO: ナビゲーション処理を実装
+      // 必要なデータの存在確認
+      if (notificationId == null || userVegetableId == null || vegetableName == null) {
+        debugPrint('Notification data is incomplete: $data');
+        return;
+      }
+
+      // 水やり通知の場合のみフィードバック画面に遷移
+      if (taskType == '水やり') {
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          // フィードバック画面に遷移
+          context.pushNamed(
+            'feedback',
+            pathParameters: {'notificationId': notificationId.toString()},
+            queryParameters: {
+              'vegetableName': vegetableName.toString(),
+              'userVegetableId': userVegetableId.toString(),
+            },
+          );
+        }
+      } else {
+        // その他のタスクは野菜詳細画面に遷移
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          context.pushNamed(
+            'vegetableDetail',
+            pathParameters: {'id': userVegetableId.toString()},
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error handling notification data: $e');
     }
   }
 
