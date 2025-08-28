@@ -86,23 +86,10 @@ serve(async (req) => {
         continue
       }
       
-      const adjustments = userVeg.schedule_adjustments || {}
-
       // 作業タスクの通知をチェック
       for (const task of schedule.tasks) {
-        let taskDay = task.day
-        
-        // 種の場合は種まきスケジュール、苗の場合は植え付けスケジュールを使用
-        // 既に適切なスケジュールを選択済みなので、追加調整は不要
-
-        // 個別調整があれば適用
-        const adjustmentKey = `${task.type}_adjustment`
-        if (adjustments[adjustmentKey]) {
-          taskDay += adjustments[adjustmentKey]
-        }
-
         // 通知日かチェック
-        if (daysSincePlanted === taskDay) {
+        if (daysSincePlanted === task.day) {
           notifications.push({
             user_vegetable_id: userVeg.id,
             user_id: userVeg.user_id,
@@ -117,30 +104,18 @@ serve(async (req) => {
       const baseWateringInterval = schedule.watering_base_interval
       const seasonMultiplier = getSeasonMultiplier(today)
       
-      // フィードバックに基づく個別調整を適用（パーセンテージ調整）
-      const wateringIntervalAdjustment = adjustments.watering_interval_adjustment || 0
-      const adjustmentMultiplier = 1 + wateringIntervalAdjustment // -0.2 → 0.8, +0.3 → 1.3
+      // 最終的な水やり間隔を計算（季節係数のみ）
+      let finalWateringInterval = Math.round(baseWateringInterval * seasonMultiplier)
       
-      // 最終的な水やり間隔を計算
-      let finalWateringInterval = Math.round(
-        baseWateringInterval * seasonMultiplier * adjustmentMultiplier
-      )
-      
-      // 最小間隔を1日に制限（頻繁すぎる通知を防ぐ）
+      // 最小間隔を1日、最大間隔を14日に制限
       finalWateringInterval = Math.max(finalWateringInterval, 1)
-      
-      // 最大間隔を14日に制限（長期間通知なしを防ぐ）
       finalWateringInterval = Math.min(finalWateringInterval, 14)
 
       if (daysSincePlanted > 0 && daysSincePlanted % finalWateringInterval === 0) {
-        // 前回のフィードバック日から十分時間が経過している場合のみ通知
-        const shouldNotify = await shouldSendWateringNotification(
-          supabase,
-          userVeg.id,
-          adjustments.last_feedback_date
-        )
+        // シンプルな重複チェックのみ
+        const hasNotificationToday = await checkTodayWateringNotification(supabase, userVeg.id, today)
         
-        if (shouldNotify) {
+        if (!hasNotificationToday) {
           notifications.push({
             user_vegetable_id: userVeg.id,
             user_id: userVeg.user_id,
@@ -218,48 +193,32 @@ function getSeasonMultiplier(date: Date): number {
   }
 }
 
-// 水やり通知を送信すべきかチェック
-async function shouldSendWateringNotification(
+// 今日の水やり通知が既に存在するかチェック（シンプル版）
+async function checkTodayWateringNotification(
   supabase: any, 
   userVegetableId: string, 
-  lastFeedbackDate: string | null
+  today: Date
 ): Promise<boolean> {
   try {
-    const today = new Date().toISOString().split('T')[0]
+    const todayString = today.toISOString().split('T')[0]
     
-    // 前回のフィードバック日がない場合は通知を送信
-    if (!lastFeedbackDate) {
-      return true
-    }
-    
-    // 今日既に水やり通知を送信済みかチェック
     const { data: existingNotifications, error } = await supabase
       .from('notifications')
       .select('id')
       .eq('user_vegetable_id', userVegetableId)
       .eq('task_type', '水やり')
-      .eq('scheduled_date', today)
+      .eq('scheduled_date', todayString)
       .limit(1)
     
     if (error) {
-      console.error('Error checking existing notifications:', error)
-      return true // エラーの場合は通知を送信
+      console.error('Error checking today notifications:', error)
+      return false // エラーの場合は重複なしとみなす
     }
     
-    // 既に今日の通知がある場合は送信しない
-    if (existingNotifications && existingNotifications.length > 0) {
-      return false
-    }
-    
-    // 前回のフィードバックから最低1日は経過している必要がある
-    const lastFeedbackMs = new Date(lastFeedbackDate).getTime()
-    const todayMs = new Date(today).getTime()
-    const daysSinceLastFeedback = Math.floor((todayMs - lastFeedbackMs) / (1000 * 60 * 60 * 24))
-    
-    return daysSinceLastFeedback >= 1
+    return existingNotifications && existingNotifications.length > 0
     
   } catch (error) {
-    console.error('Error in shouldSendWateringNotification:', error)
-    return true // エラーの場合は通知を送信
+    console.error('Error in checkTodayWateringNotification:', error)
+    return false
   }
 }

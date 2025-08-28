@@ -246,34 +246,20 @@ class SupabaseNotificationService {
       final taskType = data['task_type'];
 
       // 必要なデータの存在確認
-      if (notificationId == null || userVegetableId == null || vegetableName == null) {
+      if (notificationId == null ||
+          userVegetableId == null ||
+          vegetableName == null) {
         debugPrint('Notification data is incomplete: $data');
         return;
       }
 
-      // 水やり通知の場合のみフィードバック画面に遷移
-      if (taskType == '水やり') {
-        final context = navigatorKey.currentContext;
-        if (context != null) {
-          // フィードバック画面に遷移
-          context.pushNamed(
-            'feedback',
-            pathParameters: {'notificationId': notificationId.toString()},
-            queryParameters: {
-              'vegetableName': vegetableName.toString(),
-              'userVegetableId': userVegetableId.toString(),
-            },
-          );
-        }
-      } else {
-        // その他のタスクは野菜詳細画面に遷移
-        final context = navigatorKey.currentContext;
-        if (context != null) {
-          context.pushNamed(
-            'vegetableDetail',
-            pathParameters: {'id': userVegetableId.toString()},
-          );
-        }
+      // 野菜詳細画面に遷移
+      final context = navigatorKey.currentContext;
+      if (context != null) {
+        context.pushNamed(
+          'vegetableDetail',
+          pathParameters: {'id': userVegetableId.toString()},
+        );
       }
     } catch (e) {
       debugPrint('Error handling notification data: $e');

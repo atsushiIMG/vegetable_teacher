@@ -61,21 +61,21 @@ serve(async (req) => {
       try {
         // 通知設定をチェック
         const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('notification_settings')
-          .eq('id', notification.user_vegetables.user_id)
-          .single()
-
+        .from('user_profiles')
+        .select('notification_settings')
+        .eq('id', notification.user_vegetables.user_id)
+        .single()
+        
         if (profileError) {
           continue
         }
-
+        
         // 水やり通知が有効かチェック
         const wateringEnabled = profile?.notification_settings?.watering_reminders
         if (!wateringEnabled) {
           continue
         }
-
+        
         // ユーザーの通知時間をチェック
         const notificationTime = profile?.notification_settings?.notification_time
         

@@ -11,7 +11,6 @@ import '../../screens/ai_chat/ai_chat_screen.dart';
 import '../../models/user_vegetable.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/settings/notification_settings_screen.dart';
-import '../../screens/feedback/feedback_screen.dart';
 
 /// アプリ全体のルーティング設定
 class AppRouter {
@@ -193,68 +192,6 @@ class AppRouter {
                 key: state.pageKey,
                 child: const NotificationSettingsScreen(),
               ),
-          redirect: (context, state) {
-            final authProvider = Provider.of<AuthProvider>(
-              context,
-              listen: false,
-            );
-            if (!authProvider.isAuthenticated) {
-              return '/login';
-            }
-            return null;
-          },
-        ),
-        // フィードバック画面
-        GoRoute(
-          path: '/feedback/:notificationId',
-          name: 'feedback',
-          pageBuilder: (context, state) {
-            final notificationId = state.pathParameters['notificationId'];
-            final vegetableName = state.uri.queryParameters['vegetableName'];
-            final userVegetableId = state.uri.queryParameters['userVegetableId'];
-
-            // パラメータの検証
-            if (notificationId == null ||
-                notificationId.isEmpty ||
-                vegetableName == null ||
-                vegetableName.isEmpty ||
-                userVegetableId == null ||
-                userVegetableId.isEmpty) {
-              return MaterialPage(
-                key: state.pageKey,
-                child: Scaffold(
-                  appBar: AppBar(title: const Text('エラー')),
-                  body: const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.error_outline, size: 64, color: Colors.red),
-                        SizedBox(height: 16),
-                        Text(
-                          'パラメータが不正です',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text('フィードバック画面を表示できませんでした'),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }
-
-            return MaterialPage(
-              key: state.pageKey,
-              child: FeedbackScreen(
-                notificationId: notificationId,
-                vegetableName: vegetableName,
-                userVegetableId: userVegetableId,
-              ),
-            );
-          },
           redirect: (context, state) {
             final authProvider = Provider.of<AuthProvider>(
               context,
